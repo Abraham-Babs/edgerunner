@@ -153,19 +153,29 @@ class RiskManager:
                 "name": "BEDROCK_SHIELD",
                 "profile": "ultra_conservative",
                 "allow_conservative": False,
+                "allow_doubles": True,
+                "max_double_odds": 2.80,
+                "allow_treble": False,
                 "allow_satellite": False,
                 "satellite_pct": 0.0,
                 "max_tickets": 2,
+                "min_odds": 1.45,
+                "max_odds": 2.10,
                 "true_equity": true_equity,
             }
         elif true_equity < 6000.0:
             return {
                 "name": "CORE_GROWTH",
                 "profile": "ultra_conservative",
-                "allow_conservative": True,
+                "allow_conservative": False,
+                "allow_doubles": True,
+                "max_double_odds": 3.00,
+                "allow_treble": False,
                 "allow_satellite": False,
                 "satellite_pct": 0.0,
                 "max_tickets": 2,
+                "min_odds": 1.45,
+                "max_odds": 2.50,
                 "true_equity": true_equity,
             }
         else:
@@ -173,9 +183,13 @@ class RiskManager:
                 "name": "EXPANSION_RATCHET",
                 "profile": "ultra_conservative",
                 "allow_conservative": True,
+                "allow_doubles": True,
+                "max_double_odds": 3.50,
+                "allow_treble": True,
                 "allow_satellite": True,
                 "satellite_pct": 0.05,
                 "max_tickets": 3,
+                "max_odds": 6.00,
                 "true_equity": true_equity,
             }
 
@@ -474,7 +488,20 @@ def execute_master_board_bets(page, matcher: EdgeMatcher, builder: TicketBuilder
             print(f"[*] Reached max concurrent active bet cap ({max_active_cap}). Holding remaining tickets.")
             break
 
-        success = bettor.execute_ticket(ticket, dry_run=dry_run)
+        t_type = ticket.get("type", "single")
+        if t_type == "double":
+            t_max_odds = portfolio_mode.get("max_double_odds", 2.80)
+        elif t_type == "treble":
+            t_max_odds = 4.20
+        else:
+            t_max_odds = portfolio_mode.get("max_odds", 2.10)
+
+        success = bettor.execute_ticket(
+            ticket, 
+            dry_run=dry_run, 
+            max_odds_cap=t_max_odds,
+            min_odds_cap=portfolio_mode.get("min_odds", 1.45)
+        )
         if success:
             risk.record_submission_attempt(True)
             if not dry_run:
@@ -488,7 +515,7 @@ def execute_master_board_bets(page, matcher: EdgeMatcher, builder: TicketBuilder
         else:
             # If aborted due to round expiry, expired banner, button missing, odds mismatch, or league switch timeout, do not penalize failure budget
             reason = getattr(bettor, "last_failure_reason", None)
-            if reason in ("EXPIRED_TIMER", "EXPIRED_BANNER", "BUTTON_NOT_FOUND", "LEAGUE_SWITCH_FAILED", "ODDS_MISMATCH", "MATCH_MISMATCH"):
+            if reason in ("EXPIRED_TIMER", "EXPIRED_BANNER", "BUTTON_NOT_FOUND", "LEAGUE_SWITCH_FAILED", "ODDS_MISMATCH", "MATCH_MISMATCH", "EXCEEDS_MAX_ODDS", "BELOW_MIN_ODDS"):
                 print(f"[*] Ticket aborted ({reason}). Moving on to next edge candidate.")
                 # Immediately evict this round from master board so it is never picked again
                 for leg in ticket.get("legs", []):

@@ -34,10 +34,12 @@ Instead of scraping one league at a time, the engine maintains an in-memory roll
 - **Probability-First Sorting**: Candidate pool sorts by **Tier first, then Win Probability descending (`mu_phat`), then Edge**, preventing high-odds underdogs from starving safe favorites.
 
 ### 5. In-Betslip 3-Point Validation & Human Emulation
+- **Betslip Drawer Dismissal Guard**: Uses exact `button[data-testid="betslip-header-title-close-icon"]` with coordinate fallback `(332, 84)` and Escape key to prevent empty modal viewport lockouts.
+- **Badge & Stake Assertions**: Asserts bottom navigation badge increments before opening drawer, and verifies stake input echo before clicking Place Bet.
 - **Stateful Market Assertion**: Checks `<span data-testid="selected-market-name">` to guarantee the view is on the correct market tab before tapping odds.
 - **Vertical Week Bounding**: Bounds fixture scraping between `<p>Week X</p>` and `<p>Week X+1</p>` headers, preventing top-to-bottom TreeWalker leakage across the 4-week page scroll.
 - **Mobile Horizontal Tab Scrolling**: Automatically brings off-screen sub-tabs into view before executing natural human touch coordinates and jitter.
-- **Pre-Click Parity & Zero-Tolerance Slip Validation**: Asserts button odds on screen match expected odds within ±0.02. In the betslip drawer, it asserts match name, selection, combined odds, and a minimum 6s timer cutoff.
+- **Pre-Click Parity & Zero-Tolerance Slip Validation**: Asserts button odds on screen match expected odds within ±0.02. In the betslip drawer, it asserts match name, selection, combined odds, and true zero-second countdown boundary (`slip_sec <= 0`).
 
 ### 6. Risk Management & Live Scorecard
 - **Pure Equity Scaling**: Tiers governed strictly by `true_equity` (`Live Cash + In-Play Stakes`):
@@ -81,8 +83,8 @@ engine/
 
 ## Key Operating Targets
 
-- **Current Verified Cash Baseline**: ₦622.76
-- **Anchor Sizing**: Dynamic 4.0% – 6.5% of bankroll based on edge strength (₦25 – ₦35)
+- **Current Verified Cash Baseline**: ₦769.11 (₦819.11 True Equity)
+- **Anchor Sizing**: Dynamic 4.0% – 6.5% of bankroll based on edge strength (₦25 – ₦45)
 - **Micro-Treble**: ₦10 flat stake on 3 cross-league anchor legs (≤ 4.20 odds)
 - **Active Exposure**: Max 4 concurrent bets (Ultra-Conservative)
 - **Monte Carlo Stress Tested**: 2,000 simulated 150-bet sessions: 0.00% risk of ruin, 99.1% profit probability, average max drawdown ₦36.68 (7.8%).

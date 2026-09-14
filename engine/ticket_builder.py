@@ -66,14 +66,9 @@ def classify_tier(candidate: Dict[str, Any]) -> int:
     """
     Grades a betting selection into a conviction tier (1, 2, or 3).
 
-    The grade is based on three factors from our statistical model:
-      - min_edge   : How much positive expected value this selection carries.
-      - mu_phat    : Our model's estimated win probability for this outcome.
-      - raw_odds   : The live odds currently showing on screen.
-
-    Tier 1 (Anchor)     : High edge + high win rate + short odds. Most reliable.
-    Tier 2 (Value)      : Moderate edge + decent win rate. Solid but more variance.
-    Tier 3 (Speculative): Everything else with a positive edge. Use sparingly.
+    Tier 1 (Anchor / Shield)     : High win rate (>=60%), safe odds (<=1.85), edge >=5%.
+    Tier 2 (Yield Booster)       : Strong edge (>=4%), solid win rate (>=50%), odds up to 2.35.
+    Tier 3 (Speculative)         : Remaining positive edge selections.
     """
     edge = candidate.get("min_edge", 0.0)
     odds = candidate.get("raw_odds", 2.0)
@@ -81,7 +76,7 @@ def classify_tier(candidate: Dict[str, Any]) -> int:
 
     if edge >= 0.05 and win_rate >= 0.60 and odds <= 1.85:
         return 1
-    elif edge >= 0.04 and win_rate >= 0.45 and odds <= 2.50:
+    elif edge >= 0.05 and win_rate >= 0.55 and odds <= 2.10:
         return 2
     else:
         return 3
@@ -91,31 +86,26 @@ def calculate_tier_stake(balance: float, tier: int, ticket_type: str, odds: floa
     Calculates stake based on bankroll, conviction tier, ticket format, and edge magnitude (Fractional Kelly).
 
     Dynamic Edge-Scaled Rates:
-      - Tier 1 Single     : 4.0% base, scaling up to 6.5% for outsized edges (>= 16% edge).
-      - Tier 2 Single     : 2.5% base, scaling up to 4.0% for strong edges.
-      - Tier 3 Single     : 2.0% of bankroll (speculative, minimal exposure).
-      - Smart Double      : 2.5% base, scaling up to 4.0% with combined edge.
+      - Tier 1 Single     : 4.0% base, scaling up to 5.5% for outsized edges.
+      - Tier 2 Single     : 2.5% base, scaling up to 3.5% for strong edges (tighter sizing to protect drawdown).
+      - Tier 3 Single     : 2.0% flat.
+      - Smart Double      : 2.5% base, scaling up to 3.5%.
       - Treble            : Platform minimum (₦10).
-
-    All stakes snap to natural human increments.
     """
     if ticket_type == "single":
         if tier == 1:
-            # Base 4.0% at 6% edge, scales +0.25% per 1% additional edge up to 6.5% cap
-            rate = 0.040 + max(0.0, edge - 0.06) * 0.25
-            rate = min(0.065, max(0.040, rate))
+            rate = 0.040 + max(0.0, edge - 0.06) * 0.20
+            rate = min(0.055, max(0.040, rate))
         elif tier == 2:
-            # Base 2.5% at 4% edge, scales +0.20% per 1% additional edge up to 4.0% cap
-            rate = 0.025 + max(0.0, edge - 0.04) * 0.20
-            rate = min(0.040, max(0.025, rate))
+            rate = 0.025 + max(0.0, edge - 0.04) * 0.15
+            rate = min(0.035, max(0.025, rate))
         else:
             rate = 0.020
         raw = balance * rate
 
     elif ticket_type == "double":
-        # Base 2.5%, scales with average edge up to 4.0% cap
-        rate = 0.025 + max(0.0, edge - 0.06) * 0.20
-        rate = min(0.040, max(0.025, rate))
+        rate = 0.025 + max(0.0, edge - 0.06) * 0.15
+        rate = min(0.035, max(0.025, rate))
         raw = balance * rate
 
     elif ticket_type == "treble":
@@ -154,7 +144,7 @@ class TicketBuilder:
         sat_pct = portfolio_mode.get("satellite_pct", 0.05)
 
         max_w_count = profile.get("max_weeks", 4)
-        max_double_odds = profile.get("max_double_odds", 6.00)
+        max_double_odds = portfolio_mode.get("max_double_odds", profile.get("max_double_odds", 2.80))
 
         # 1. Identify round sequence across visible weeks
         all_weeks = []
@@ -188,9 +178,11 @@ class TicketBuilder:
             if key not in best_by_match or edge["min_edge"] > best_by_match[key]["min_edge"]:
                 best_by_match[key] = edge
 
-        pool = list(best_by_match.values())
-        # Sort by Tier ascending (Tier 1 first), then win probability descending, then edge descending
-        pool.sort(key=lambda x: (x["tier"], -x.get("mu_phat", 0.0), -x["min_edge"]))
+        min_odds_limit = profile.get("min_odds", 1.45)
+        max_odds_limit = profile.get("max_odds", 2.10)
+        pool = [c for c in best_by_match.values() if min_odds_limit <= c.get("raw_odds", 0.0) <= max_odds_limit]
+        # Sort by Tier ascending (Tier 1 first), then edge (EV) descending, then win probability
+        pool.sort(key=lambda x: (x["tier"], -x["min_edge"], -x.get("mu_phat", 0.0)))
 
         t1_pool = [c for c in pool if c["tier"] == 1]
         t2_pool = [c for c in pool if c["tier"] == 2]
@@ -199,26 +191,28 @@ class TicketBuilder:
         tickets = []
         used_matches = set()
 
-        # 3. Priority 1: Top Tier 1 Anchor Single (Imminent round for rapid capital recycling)
-        imminent_t1 = [c for c in t1_pool if not c.get("week") or c.get("week") in imminent_weeks]
-        anchor = imminent_t1[0] if imminent_t1 else (t1_pool[0] if t1_pool else None)
+        # 3. Priority 1: Top Anchor Single (Tier 1 preferred, Tier 2 if no Tier 1)
+        avail_anchors = t1_pool if t1_pool else t2_pool
+        imminent_anchors = [c for c in avail_anchors if not c.get("week") or c.get("week") in imminent_weeks]
+        anchor = imminent_anchors[0] if imminent_anchors else (avail_anchors[0] if avail_anchors else None)
         if anchor:
             anchor_key = get_match_key(anchor)
-            stake = calculate_tier_stake(balance, tier=1, ticket_type="single", odds=anchor["raw_odds"], edge=anchor["min_edge"])
+            stake = calculate_tier_stake(balance, tier=anchor["tier"], ticket_type="single", odds=anchor["raw_odds"], edge=anchor["min_edge"])
             tickets.append({
                 "type": "single",
                 "legs": [anchor],
                 "combined_odds": anchor["raw_odds"],
                 "avg_edge": anchor["min_edge"],
                 "stake": stake,
-                "tier": 1,
+                "tier": anchor["tier"],
                 "role": "core_anchor"
             })
             used_matches.add(anchor_key)
 
         # 4. Priority 2: Smart Double (Tier 1 Anchor + Tier 2 Booster)
+        allow_doubles = portfolio_mode.get("allow_doubles", True)
         roll = random.random()
-        if len(tickets) < effective_max_tickets and roll < 0.35 and pool:
+        if allow_doubles and len(tickets) < effective_max_tickets and roll < 0.35 and pool:
             avail_anchors = [c for c in (t1_pool + t2_pool) if get_match_key(c) not in used_matches]
             avail_boosters = [c for c in (t2_pool + t3_pool) if get_match_key(c) not in used_matches]
 
@@ -251,8 +245,9 @@ class TicketBuilder:
                             break
 
         # 4.5 Priority 2.5: Smart Micro-Treble (3 cross-league anchor legs, capped <= 4.20 odds, min ₦10 stake)
+        allow_treble = portfolio_mode.get("allow_treble", False)
         roll_treble = random.random()
-        if len(tickets) < effective_max_tickets and roll_treble < 0.20:
+        if allow_treble and len(tickets) < effective_max_tickets and roll_treble < 0.20:
             avail_treble = [c for c in (t1_pool + t2_pool) if get_match_key(c) not in used_matches]
             leagues_seen = set()
             treble_legs = []
@@ -281,26 +276,29 @@ class TicketBuilder:
                     for l in treble_legs:
                         used_matches.add(get_match_key(l))
 
-        # 5. Priority 3: Steady Value Singles (Only if allowed by portfolio mode)
+        # 5. Priority 3: Steady Value Singles (Tier 1 & Tier 2 always; Tier 3 only if allow_conservative)
+        singles_candidates = [c for c in (t1_pool + t2_pool) if get_match_key(c) not in used_matches]
         if allow_conservative:
-            for candidate in pool:
-                if len(tickets) >= effective_max_tickets:
-                    break
-                cand_key = get_match_key(candidate)
-                if cand_key in used_matches:
-                    continue
+            singles_candidates += [c for c in t3_pool if get_match_key(c) not in used_matches]
 
-                stake = calculate_tier_stake(balance, tier=candidate["tier"], ticket_type="single", odds=candidate["raw_odds"], edge=candidate["min_edge"])
-                tickets.append({
-                    "type": "single",
-                    "legs": [candidate],
-                    "combined_odds": candidate["raw_odds"],
-                    "avg_edge": candidate["min_edge"],
-                    "stake": stake,
-                    "tier": candidate["tier"],
-                    "role": "value_single"
-                })
-                used_matches.add(cand_key)
+        for candidate in singles_candidates:
+            if len(tickets) >= effective_max_tickets:
+                break
+            cand_key = get_match_key(candidate)
+            if cand_key in used_matches:
+                continue
+
+            stake = calculate_tier_stake(balance, tier=candidate["tier"], ticket_type="single", odds=candidate["raw_odds"], edge=candidate["min_edge"])
+            tickets.append({
+                "type": "single",
+                "legs": [candidate],
+                "combined_odds": candidate["raw_odds"],
+                "avg_edge": candidate["min_edge"],
+                "stake": stake,
+                "tier": candidate["tier"],
+                "role": "value_single"
+            })
+            used_matches.add(cand_key)
 
         # 6. Priority 4: Satellite Slice (Up to 5% of round capital on higher-odds balanced/liberal play)
         if allow_satellite and satellite_candidates and len(tickets) < effective_max_tickets:

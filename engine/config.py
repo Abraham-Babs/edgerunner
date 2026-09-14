@@ -74,8 +74,9 @@ LEAGUES = {
 PROFILES = {
     "ultra_conservative": {
         "min_edge": 0.05,
-        "min_win_rate": 0.60,
-        "max_odds": 1.85,
+        "min_win_rate": 0.55,
+        "min_odds": 1.45,
+        "max_odds": 2.10,
         "max_concurrent_bets": 4,
         "max_weeks": 4,           # Lookahead up to 4 rounds
         "max_double_odds": 3.00

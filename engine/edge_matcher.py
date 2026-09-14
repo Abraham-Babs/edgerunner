@@ -78,10 +78,12 @@ class EdgeMatcher:
         for p_name, p_cfg in PROFILES.items():
             min_e = p_cfg["min_edge"]
             min_w = p_cfg["min_win_rate"]
+            min_o = p_cfg.get("min_odds", 1.0)
             max_o = p_cfg["max_odds"]
             f = self.df[
                 (self.df["min_edge"] >= min_e) &
                 (self.df["mu_phat"] >= min_w) &
+                (self.df["raw_odds"] >= min_o) &
                 (self.df["raw_odds"] <= max_o)
             ]
             lookup = {}

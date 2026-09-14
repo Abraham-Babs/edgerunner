@@ -32,7 +32,7 @@ from typing import Dict, Any, List, Optional
 
 from engine.config import BET_LOG_FILE, SHOTS_DIR, EXCHANGE_USERNAME, EXCHANGE_PASSWORD
 from engine.human_interaction import human_tap, human_type, human_pause
-from engine.parser import clean_page
+from engine.parser import clean_page, select_week_tab
 
 class Bettor:
     def __init__(self, page):
@@ -71,7 +71,7 @@ class Bettor:
                 receipt_file
             ])
 
-    def execute_ticket(self, ticket: Dict[str, Any], dry_run: bool = False, dry_fire: bool = False) -> bool:
+    def execute_ticket(self, ticket: Dict[str, Any], dry_run: bool = False, dry_fire: bool = False, max_odds_cap: Optional[float] = None, min_odds_cap: Optional[float] = None) -> bool:
         """
         Executes a single or multi-leg ticket:
         1. Taps each odds selection
@@ -83,7 +83,18 @@ class Bettor:
         ticket_type = ticket["type"]
         stake = ticket["stake"]
         legs = ticket["legs"]
+        comb_odds = ticket.get("combined_odds", 1.0)
         self.last_failure_reason = None
+
+        # HARD CAPITAL SHIELD: Mode-bound odds range assertions
+        if max_odds_cap is not None and comb_odds > max_odds_cap:
+            print(f"[!] HARD REJECT: Ticket odds {comb_odds} exceeds mode max odds cap {max_odds_cap}. Aborting bet.")
+            self.last_failure_reason = "EXCEEDS_MAX_ODDS"
+            return False
+        if min_odds_cap is not None and comb_odds < min_odds_cap:
+            print(f"[!] HARD REJECT: Ticket odds {comb_odds} is below minimum odds floor {min_odds_cap}. Aborting bet.")
+            self.last_failure_reason = "BELOW_MIN_ODDS"
+            return False
 
         print(f"[*] Preparing Ticket [{ticket_type.upper()}]: {len(legs)} leg(s), Stake: ₦{stake}")
         for idx, leg in enumerate(legs, 1):
@@ -115,6 +126,11 @@ class Bettor:
                         return False
                     human_pause(0.2, 0.5)
 
+                # Ensure target round week tab is active so secondary markets reveal its fixtures
+                if week:
+                    select_week_tab(self.page, week)
+                    human_pause(0.2, 0.4)
+
                 # Ensure target market tab is active
                 self.select_market(category, tab_name)
                 human_pause(0.3, 0.7)
@@ -125,10 +141,13 @@ class Bettor:
                     match_name, btn_idx, week=week, tab_name=tab_name, expected_odds=expected_odds
                 )
                 if not clicked:
-                    # Active self-correction: if timer permits, re-assert market tab and retry
+                    # Active self-correction: if timer permits, re-assert week and market tab and retry
                     slip_cd = self.get_betslip_expiry_seconds() or 30
                     if slip_cd > 12:
-                        print(f"[*] Pre-click mismatch or tab shift for {match_name}. Re-asserting {tab_name}...")
+                        print(f"[*] Pre-click mismatch or tab shift for {match_name}. Re-asserting {week or ''} & {tab_name}...")
+                        if week:
+                            select_week_tab(self.page, week)
+                            self.page.wait_for_timeout(300)
                         self.select_market(category, tab_name)
                         self.page.wait_for_timeout(400)
                         clicked = self.click_fixture_button(
@@ -175,6 +194,16 @@ class Bettor:
                 human_tap(rem_exp, self.page)
                 self.page.wait_for_timeout(800)
 
+            # If single ticket and multiple tabs appear, explicitly select Singles tab
+            if ticket_type == "single":
+                try:
+                    s_tab = self.page.locator("button:has-text('Singles'), p:has-text('Singles')").first
+                    if s_tab.count() > 0 and s_tab.is_visible(timeout=300):
+                        human_tap(s_tab, self.page)
+                        self.page.wait_for_timeout(300)
+                except Exception:
+                    pass
+
             # In-Betslip Stateful 3-Point Validation (Zero-Tolerance)
             slip_odds = self.get_betslip_total_odds()
             expected_odds = ticket.get("combined_odds", 1.0)
@@ -203,18 +232,18 @@ class Bettor:
                     self.close_betslip()
                     return False
 
-            # In-Betslip Live Expiry Guard (Lean 6s Cutoff)
+            # In-Betslip Live Expiry Guard (Lean 1s cutoff - accepts bets down to final second)
             slip_sec = self.get_betslip_expiry_seconds()
             if slip_sec is not None:
                 print(f"[*] In-Betslip Expiration Timer: {slip_sec}s remaining")
-                if slip_sec < 6:
-                    print(f"[!] REJECTED: Only {slip_sec}s left on slip timer (< 6s cutoff). Aborting to avoid platform lockout.")
+                if slip_sec <= 0:
+                    print(f"[!] REJECTED: Slip timer expired (0s remaining). Aborting to avoid platform lockout.")
                     self.last_failure_reason = "EXPIRED_TIMER"
                     self.capture_diagnostic("slip_timer_expired")
-                    self.log_bet(ticket, status=f"REJECTED_EXPIRED_{slip_sec}s")
+                    self.log_bet(ticket, status="REJECTED_EXPIRED_0s")
                     return False
 
-            # Input Stake with resilient input selectors
+            # Input Stake with resilient input selectors and verified echo assertion
             try:
                 stake_selectors = [
                     "input[data-testid='betslip-stake-amount']",
@@ -235,7 +264,18 @@ class Bettor:
                     stake_str = str(int(stake) if stake.is_integer() else stake)
                     human_pause(0.3, 0.7)
                     human_type(stake_input, stake_str)
-                    self.page.wait_for_timeout(random.randint(500, 900))
+                    self.page.wait_for_timeout(random.randint(400, 700))
+
+                    # Stake echo assertion: verify field holds the exact typed stake
+                    val = (stake_input.input_value() or "").strip().replace(",", "")
+                    if val != stake_str:
+                        stake_input.fill("")
+                        human_pause(0.1, 0.2)
+                        human_type(stake_input, stake_str)
+                        val = (stake_input.input_value() or "").strip().replace(",", "")
+                        if val != stake_str:
+                            print(f"[!] REJECTED: Stake input echo '{val}' != expected '{stake_str}'. Aborting bet.")
+                            return False
                 else:
                     print("\n[!] ALERT: Stake input element not found in betslip! Layout may have shifted.")
                     self.capture_diagnostic("stake_input_missing")
@@ -294,10 +334,56 @@ class Bettor:
         finally:
             self.close_betslip()
 
+    def is_betslip_open(self) -> bool:
+        """Returns True if the betslip drawer or empty betslip overlay is currently open on screen."""
+        try:
+            drawer = self.page.locator('button[data-testid="betslip-header-title-close-icon"], [data-testid="betslip-header"], [data-testid="empty-betslip"]').first
+            if drawer.count() > 0 and drawer.is_visible(timeout=300):
+                return True
+            return bool(self.page.evaluate("""() => {
+                const header = Array.from(document.querySelectorAll('*')).find(el => (el.innerText || '').trim() === 'VIRTUALS BETSLIP');
+                return !!(header && header.getBoundingClientRect().height > 0);
+            }"""))
+        except Exception:
+            return False
+
+    def get_betslip_badge_count(self) -> int:
+        """Returns the integer selection count currently displayed on the bottom nav betslip badge or sticky selection bar."""
+        try:
+            cnt = self.page.evaluate("""() => {
+                // 1. Check sticky bottom bar (e.g. '1 Selection', '2 Selections')
+                const all = Array.from(document.querySelectorAll('div, span, p'));
+                const selBar = all.find(el => /^\\d+\\s+Selection/i.test((el.innerText || '').trim()));
+                if (selBar) {
+                    const m = (selBar.innerText || '').match(/^(\\d+)\\s+Selection/i);
+                    if (m) return parseInt(m[1]);
+                }
+                // 2. Check bottom nav betslip badge element
+                const badge = document.querySelector('[data-testid*="betslip"] span, button[data-testid*="betslip"] span, [class*="badge"]');
+                if (badge) {
+                    const m = (badge.innerText || '').match(/\\d+/);
+                    if (m) return parseInt(m[0]);
+                }
+                return 0;
+            }""")
+            if cnt and cnt > 0:
+                return cnt
+        except Exception:
+            pass
+        return 0
+
     def close_betslip(self):
         """Close/dismiss the betslip drawer or confirmation modal so the fixture board is unobstructed."""
         try:
-            # 1. Look for explicit close buttons in betslip or receipt modal
+            # 1. Direct verified testid selector for SportsExchange's betslip header close icon
+            close_btn = self.page.locator('button[data-testid="betslip-header-title-close-icon"], [data-testid*="close-icon"]').first
+            if close_btn.count() > 0 and close_btn.is_visible(timeout=500):
+                human_tap(close_btn, self.page)
+                self.page.wait_for_timeout(300)
+                if not self.is_betslip_open():
+                    return True
+
+            # 2. General close selectors
             close_selectors = [
                 "[aria-label*='close' i]",
                 "[data-testid*='close' i]",
@@ -310,23 +396,25 @@ class Bettor:
             ]
             for sel in close_selectors:
                 el = self.page.locator(sel).first
-                if el.count() > 0 and el.is_visible(timeout=400):
+                if el.count() > 0 and el.is_visible(timeout=300):
                     human_tap(el, self.page)
-                    self.page.wait_for_timeout(600)
+                    self.page.wait_for_timeout(300)
+                    if not self.is_betslip_open():
+                        return True
+
+            # 3. Verified header close icon coordinate (x=332, y=84) with spatial jitter
+            if self.is_betslip_open():
+                jx = 332 + random.uniform(-4, 4)
+                jy = 84 + random.uniform(-4, 4)
+                self.page.mouse.click(jx, jy)
+                self.page.wait_for_timeout(300)
+                if not self.is_betslip_open():
                     return True
 
-            # 2. Check if the 'VIRTUALS BETSLIP' header or receipt is visible on screen
-            header = self.page.locator("text='VIRTUALS BETSLIP'").first
-            if header.count() > 0 and header.is_visible(timeout=300):
-                self.page.mouse.click(335, 105)
-                self.page.wait_for_timeout(600)
-                return True
-
-            receipt_btn = self.page.locator("text='REBET'").first
-            if receipt_btn.count() > 0 and receipt_btn.is_visible(timeout=300):
-                self.page.mouse.click(335, 135)
-                self.page.wait_for_timeout(600)
-                return True
+            # 4. Fallback: Escape key
+            self.page.keyboard.press("Escape")
+            self.page.wait_for_timeout(300)
+            return not self.is_betslip_open()
         except Exception:
             pass
         return False
@@ -334,46 +422,122 @@ class Bettor:
     def clear_betslip_selections(self):
         """Removes any stale, expired, or leftover selections from the betslip."""
         try:
-            # 1. Primary "Clear All" button
-            clear_btn = self.page.locator("text='Clear All', [data-testid*='clear']").first
-            if clear_btn.count() > 0 and clear_btn.is_visible(timeout=800):
-                human_tap(clear_btn, self.page)
-                self.page.wait_for_timeout(600)
+            # 1. Primary "Clear All" locator across button, span, div, p
+            clear_selectors = [
+                "button:has-text('Clear All')",
+                "span:has-text('Clear All')",
+                "div:has-text('Clear All')",
+                "p:has-text('Clear All')",
+                "[data-testid*='clear']",
+                "[data-testid*='Clear']"
+            ]
+            for sel in clear_selectors:
+                clear_btn = self.page.locator(sel).first
+                if clear_btn.count() > 0 and clear_btn.is_visible(timeout=500):
+                    human_tap(clear_btn, self.page)
+                    self.page.wait_for_timeout(400)
+                    break
+
+            # Check for potential "Clear Betslip" confirmation dialog (Yes / Confirm / Clear / Ok)
+            self.page.evaluate("""() => {
+                const candidates = Array.from(document.querySelectorAll('button, div[role="button"], span'));
+                const conf = candidates.find(el => {
+                    const t = (el.innerText || '').trim().toLowerCase();
+                    return ['yes', 'confirm', 'clear', 'ok', 'proceed'].includes(t);
+                });
+                if (conf && conf.getBoundingClientRect().height > 0) conf.click();
+            }""")
+            self.page.wait_for_timeout(300)
 
             # 2. Primary "REMOVE EXPIRED" banner/button
             rem_btn = self.page.locator("button[data-testid='loading-button-contained--error'], button:has-text('REMOVE EXPIRED'), button:has-text('Remove Expired')").first
-            if rem_btn.count() > 0 and rem_btn.is_visible(timeout=600):
+            if rem_btn.count() > 0 and rem_btn.is_visible(timeout=400):
                 human_tap(rem_btn, self.page)
-                self.page.wait_for_timeout(600)
+                self.page.wait_for_timeout(400)
 
-            # 3. Individual item remove buttons / trash icons
-            for _ in range(5):
-                item_rem = self.page.locator("button[data-testid='betslip-events-tournament-expired-button'], button:has-text('REMOVE'), svg[data-testid*='trash']").first
-                if item_rem.count() > 0 and item_rem.is_visible(timeout=300):
-                    human_tap(item_rem, self.page)
-                    self.page.wait_for_timeout(300)
-                else:
-                    break
+            # 3. DOM JavaScript click fallback for "Clear All" text
+            self.page.evaluate("""() => {
+                const all = Array.from(document.querySelectorAll('*'));
+                const clearEl = all.find(el => (el.innerText || '').trim() === 'Clear All');
+                if (clearEl) {
+                    clearEl.dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true}));
+                    const p = clearEl.closest('button') || clearEl.parentElement;
+                    if (p) p.dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true}));
+                }
+            }""")
+            self.page.wait_for_timeout(300)
+
+            # 4. Individual item remove buttons / trash icons inside drawer
+            self.page.evaluate("""() => {
+                const drawer = document.querySelector('div[class*="drawer"], div.fixed.inset-0, [data-testid*="betslip"]');
+                if (!drawer) return;
+                const svgs = Array.from(drawer.querySelectorAll('svg'));
+                for (const s of svgs) {
+                    const rect = s.getBoundingClientRect();
+                    // Item trash icons appear on the right side of selection cards
+                    if (rect.left > 240 && rect.top > 100) {
+                        const target = s.closest('button') || s.parentElement || s;
+                        target.dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true}));
+                    }
+                }
+            }""")
+            self.page.wait_for_timeout(400)
         except Exception:
             pass
 
     def reset_betslip(self):
         """Ensures the betslip is clean and empty before starting a new ticket."""
         try:
-            badge_btn = self.page.locator('button[data-testid="bottom-nav-item-betslip"]').first
-            if badge_btn.count() > 0:
-                txt = badge_btn.inner_text() or ''
-                import re as re_mod
-                m = re_mod.search(r'\d+', txt)
-                if m and int(m.group(0)) > 0:
-                    badge_cnt = int(m.group(0))
-                    print(f"[*] Resetting betslip: {badge_cnt} leftover selections detected.")
-                    human_tap(badge_btn, self.page)
-                    self.page.wait_for_timeout(1500)
-                    self.clear_betslip_selections()
-                    self.close_betslip()
-        except Exception:
-            pass
+            clean_page(self.page)
+            # If betslip is open, clear and close it
+            if self.is_betslip_open():
+                self.clear_betslip_selections()
+                self.close_betslip()
+
+            badge_cnt = self.get_betslip_badge_count()
+            if badge_cnt > 0:
+                print(f"[*] Resetting betslip: {badge_cnt} leftover selections detected.")
+                opened = False
+                for sel in ['button[data-testid="bottom-nav-item-betslip"]', '[data-testid*="acca-bonus"]', "button:has-text('Betslip')", "a[href*='betslip']"]:
+                    el = self.page.locator(sel).first
+                    if el.count() > 0 and el.is_visible(timeout=500):
+                        human_tap(el, self.page)
+                        self.page.wait_for_timeout(600)
+                        opened = True
+                        break
+                self.clear_betslip_selections()
+                self.close_betslip()
+
+            # Post-clear assertion: verify badge count dropped to 0
+            badge_cnt = self.get_betslip_badge_count()
+            if badge_cnt > 0:
+                print(f"[!] Residual {badge_cnt} selections after clear. Purging betslip storage and reloading...")
+                try:
+                    self.page.evaluate("""() => {
+                        const keysToRemove = [];
+                        for (let i = 0; i < localStorage.length; i++) {
+                            const k = localStorage.key(i);
+                            if (k && (k.toLowerCase().includes('slip') || k.toLowerCase().includes('bet') || k.toLowerCase().includes('ticket'))) {
+                                keysToRemove.push(k);
+                            }
+                        }
+                        keysToRemove.forEach(k => localStorage.removeItem(k));
+                    }""")
+                except Exception:
+                    pass
+                try:
+                    self.page.reload(wait_until="domcontentloaded", timeout=15000)
+                except Exception:
+                    self.page.wait_for_timeout(2000)
+                try:
+                    self.page.wait_for_load_state("networkidle", timeout=3000)
+                except Exception:
+                    pass
+                self.page.wait_for_timeout(1000)
+                clean_page(self.page)
+                self.close_betslip()
+        except Exception as e:
+            print(f"[!] Error during reset_betslip: {e}")
 
     def switch_league(self, league_key: str) -> bool:
         """Switches to the requested league via direct URL or carousel, waiting for full DOM hydration."""
@@ -388,6 +552,19 @@ class Bettor:
             return True
 
         target_url = f"https://sports-exchange.internal/en-ng/virtuals/scheduled/leagues/{slug}"
+        # 1. Attempt in-page SPA carousel click to preserve betslip selections across leagues
+        try:
+            league_btn = self.page.locator(f"a[href*='{slug}'], button:has-text('{slug}')").first
+            if league_btn.count() > 0 and league_btn.is_visible(timeout=800):
+                human_tap(league_btn, self.page)
+                self.page.wait_for_timeout(random.randint(1000, 1500))
+                clean_page(self.page)
+                if slug in self.page.url:
+                    return True
+        except Exception:
+            pass
+
+        # 2. Resilient direct navigation fallback
         for attempt in range(1, 4):
             try:
                 self.page.goto(target_url, wait_until="commit", timeout=25000)
@@ -454,6 +631,11 @@ class Bettor:
 
     def click_fixture_button(self, match_name: str, btn_idx: int, week: str = None, tab_name: str = None, expected_odds: float = None) -> bool:
         """Finds match row on screen strictly within target week boundary and asserts odds before clicking."""
+        # Ensure any betslip drawer or overlay is closed so odds table is unobstructed
+        if self.is_betslip_open():
+            self.close_betslip()
+            self.page.wait_for_timeout(300)
+
         try:
             res = self.page.evaluate(r"""({mName, bIdx, wName, expOdds}) => {
                 const weekHeaders = Array.from(document.querySelectorAll('p')).filter(p => {
@@ -508,13 +690,23 @@ class Bettor:
                                 return false;
                             }
                         }
-                        btn.scrollIntoView?.();
+                        btn.scrollIntoView?.({ block: "center", inline: "center" });
                         btn.click();
-                        return true;
+                        const rect = btn.getBoundingClientRect();
+                        return { success: true, x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
                     }
                 }
                 return false;
             }""", {"mName": match_name, "bIdx": btn_idx, "wName": week, "expOdds": expected_odds})
+            if res and isinstance(res, dict) and res.get("success"):
+                # Micro-pause and verify if betslip badge registered
+                self.page.wait_for_timeout(300)
+                badge_cnt = self.get_betslip_badge_count()
+                if badge_cnt == 0 and res.get("x") and res.get("y"):
+                    # Fallback real mouse tap if synthetic click didn't trigger React state
+                    self.page.mouse.click(res["x"], res["y"])
+                    self.page.wait_for_timeout(400)
+                return True
             return bool(res)
         except Exception:
             return False

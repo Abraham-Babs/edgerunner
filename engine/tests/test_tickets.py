@@ -3,7 +3,7 @@ sys.stdout.reconfigure(encoding='utf-8')
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.insert(0, ROOT)
 
-from engine.ticket_builder import calculate_stake, quantize_to_human_step, TicketBuilder
+from engine.ticket_builder import calculate_tier_stake, quantize_to_human_step, TicketBuilder
 
 def test_staking_quantization():
     print("[*] Testing Staking Quantization...")
@@ -19,20 +19,25 @@ def test_staking_quantization():
 
 def test_balance_scaling():
     print("[*] Testing Balance Tier Scaling...")
-    # Low balance (₦600) -> 5% is ₦30
-    s_600 = calculate_stake(600.0, "single", 0.05)
-    print(f"  Balance ₦600  -> Single Stake: ₦{s_600}")
-    assert s_600 in [30.0, 35.0]
+    # Low balance (₦600) -> Tier 1 (4.0% - 5.5% = ₦24 - ₦33 -> ₦25 or ₦30)
+    s_600_t1 = calculate_tier_stake(600.0, tier=1, ticket_type="single", edge=0.05)
+    print(f"  Balance ₦600  -> Tier 1 Single Stake: ₦{s_600_t1}")
+    assert s_600_t1 in [20.0, 25.0, 30.0]
 
-    # Mid balance (₦2,500) -> 5% is ₦125
-    s_2500 = calculate_stake(2500.0, "single", 0.05)
-    print(f"  Balance ₦2,500 -> Single Stake: ₦{s_2500}")
-    assert s_2500 in [125.0, 150.0]
+    # Low balance (₦600) -> Tier 2 (2.5% = ₦15)
+    s_600_t2 = calculate_tier_stake(600.0, tier=2, ticket_type="single", edge=0.04)
+    print(f"  Balance ₦600  -> Tier 2 Single Stake: ₦{s_600_t2}")
+    assert s_600_t2 in [15.0, 20.0]
 
-    # High balance (₦10,000) -> 5% is ₦500
-    s_10000 = calculate_stake(10000.0, "single", 0.05)
-    print(f"  Balance ₦10,000 -> Single Stake: ₦{s_10000}")
-    assert s_10000 == 500.0
+    # Mid balance (₦2,500) -> Tier 1 (4% = ₦100)
+    s_2500 = calculate_tier_stake(2500.0, tier=1, ticket_type="single", edge=0.05)
+    print(f"  Balance ₦2,500 -> Tier 1 Single Stake: ₦{s_2500}")
+    assert s_2500 in [100.0, 125.0]
+
+    # High balance (₦15,000) -> Clamped at MAX_STAKE_CEILING (₦500)
+    s_15000 = calculate_tier_stake(15000.0, tier=1, ticket_type="single", edge=0.10)
+    print(f"  Balance ₦15,000 -> Single Stake: ₦{s_15000}")
+    assert s_15000 == 500.0
     print("[+] Balance tier scaling verified!")
 
 def test_ticket_builder_no_collision():
