@@ -1,0 +1,32 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+output/
+cache/
+simulator/
+# Environment variables & secrets
+.env
+.env.local
+*.env
+
+# Browser profile & session data
+browser_profile/
+
+# Binary parquet datasets
+parquets/
+binned_parquets/
+
+# Logs & diagnostic screenshots
+*.log
+*.png
+analysis/screenshots/
+analysis/
+lookup/
+browser_data/
