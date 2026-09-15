@@ -66,17 +66,17 @@ def classify_tier(candidate: Dict[str, Any]) -> int:
     """
     Grades a betting selection into a conviction tier (1, 2, or 3).
 
-    Tier 1 (Anchor / Shield)     : High win rate (>=60%), safe odds (<=1.85), edge >=5%.
-    Tier 2 (Yield Booster)       : Strong edge (>=4%), solid win rate (>=50%), odds up to 2.35.
-    Tier 3 (Speculative)         : Remaining positive edge selections.
+    Tier 1 (Anchor / Shield)     : High edge (>=6%) with compact odds (<=2.40), or heavy favorite (win rate >=55%, odds <=1.90).
+    Tier 2 (Yield Booster)       : Solid confirmed statistical edge (>=5%) within verified odds band (<=3.20).
+    Tier 3 (Speculative)         : Long-odds or higher variance selections (>3.20).
     """
     edge = candidate.get("min_edge", 0.0)
     odds = candidate.get("raw_odds", 2.0)
     win_rate = candidate.get("mu_phat", 0.40)
 
-    if edge >= 0.05 and win_rate >= 0.60 and odds <= 1.85:
+    if (edge >= 0.06 and odds <= 2.40) or (win_rate >= 0.55 and odds <= 1.90):
         return 1
-    elif edge >= 0.05 and win_rate >= 0.55 and odds <= 2.10:
+    elif edge >= 0.05 and odds <= 3.20:
         return 2
     else:
         return 3
