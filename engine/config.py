@@ -74,32 +74,61 @@ LEAGUES = {
 PROFILES = {
     "ultra_conservative": {
         "min_edge": 0.05,
-        "min_win_rate": 0.55,
-        "min_odds": 1.45,
-        "max_odds": 2.10,
+        "min_odds": {
+            "league_en": 2.00,
+            "league_de": 1.50,
+            "league_es": 1.45,
+            "league_it": 1.45,
+        },
+        "max_odds": {
+            "league_en": 3.20,
+            "league_de": 5.00,
+            "league_es": 3.50,
+            "league_it": 3.50,
+        },
         "max_concurrent_bets": 4,
         "max_weeks": 4,           # Lookahead up to 4 rounds
         "max_double_odds": 3.00
     },
     "conservative": {
         "min_edge": 0.05,
-        "min_win_rate": 0.40,
-        "max_odds": 99.0,
+        "min_odds": {
+            "league_en": 2.00,
+            "league_de": 1.50,
+            "league_es": 1.40,
+            "league_it": 1.40,
+        },
+        "max_odds": {
+            "league_en": 4.50,
+            "league_de": 6.00,
+            "league_es": 4.50,
+            "league_it": 4.50,
+        },
         "max_concurrent_bets": 8,
         "max_weeks": 3,
         "max_double_odds": 5.00
     },
     "balanced": {
         "min_edge": 0.04,
-        "min_win_rate": 0.35,
-        "max_odds": 99.0,
+        "min_odds": {
+            "league_en": 1.90,
+            "league_de": 1.40,
+            "league_es": 1.35,
+            "league_it": 1.35,
+        },
+        "max_odds": {
+            "league_en": 5.00,
+            "league_de": 8.00,
+            "league_es": 5.00,
+            "league_it": 5.00,
+        },
         "max_concurrent_bets": 10,
         "max_weeks": 4,
         "max_double_odds": 6.00
     },
     "expansive": {
         "min_edge": 0.03,
-        "min_win_rate": 0.30,
+        "min_odds": 1.0,
         "max_odds": 99.0,
         "max_concurrent_bets": 10,
         "max_weeks": 4,

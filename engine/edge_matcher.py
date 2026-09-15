@@ -77,17 +77,24 @@ class EdgeMatcher:
         self.lookups: Dict[str, Dict[Tuple[str, str, str], dict]] = {}
         for p_name, p_cfg in PROFILES.items():
             min_e = p_cfg["min_edge"]
-            min_w = p_cfg["min_win_rate"]
-            min_o = p_cfg.get("min_odds", 1.0)
-            max_o = p_cfg["max_odds"]
-            f = self.df[
-                (self.df["min_edge"] >= min_e) &
-                (self.df["mu_phat"] >= min_w) &
-                (self.df["raw_odds"] >= min_o) &
-                (self.df["raw_odds"] <= max_o)
-            ]
+            min_w = p_cfg.get("min_win_rate", 0.0)
+
             lookup = {}
-            for row in f.itertuples(index=False):
+            for row in self.df.itertuples(index=False):
+                if row.min_edge < min_e:
+                    continue
+                if min_w > 0.0 and getattr(row, "mu_phat", 0.0) < min_w:
+                    continue
+
+                cfg_min_o = p_cfg.get("min_odds", 1.0)
+                min_o = cfg_min_o.get(row.league, 1.0) if isinstance(cfg_min_o, dict) else cfg_min_o
+
+                cfg_max_o = p_cfg.get("max_odds", 99.0)
+                max_o = cfg_max_o.get(row.league, 99.0) if isinstance(cfg_max_o, dict) else cfg_max_o
+
+                if not (min_o <= row.raw_odds <= max_o):
+                    continue
+
                 key = (row.league, row.match_name.strip(), row.outcome.strip())
                 lookup[key] = {
                     "league": row.league,
@@ -96,7 +103,12 @@ class EdgeMatcher:
                     "mu_phat": float(row.mu_phat),
                     "fair_prob": float(row.fair_prob),
                     "raw_odds": float(row.raw_odds),
-                    "min_edge": float(row.min_edge)
+                    "min_edge": float(row.min_edge),
+                    "oos_edge": float(getattr(row, "oos_roi", 0.0)),
+                    "oos_roi": float(getattr(row, "oos_roi", 0.0)),
+                    "oos_t_stat": float(getattr(row, "oos_t_stat", 0.0)),
+                    "n_train": int(getattr(row, "n_train", 0)),
+                    "n_test": int(getattr(row, "n_test", 0)),
                 }
             self.lookups[p_name] = lookup
 
