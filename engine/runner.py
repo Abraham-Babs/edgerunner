@@ -160,7 +160,7 @@ class RiskManager:
                 "satellite_pct": 0.0,
                 "max_tickets": 2,
                 "min_odds": 1.45,
-                "max_odds": 2.10,
+                "max_odds": 3.50,
                 "true_equity": true_equity,
             }
         elif true_equity < 6000.0:
@@ -175,7 +175,7 @@ class RiskManager:
                 "satellite_pct": 0.0,
                 "max_tickets": 2,
                 "min_odds": 1.45,
-                "max_odds": 2.50,
+                "max_odds": 3.50,
                 "true_equity": true_equity,
             }
         else:

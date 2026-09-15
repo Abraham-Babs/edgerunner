@@ -64,17 +64,16 @@ def quantize_to_human_step(raw_amount: float) -> float:
 
 def classify_tier(candidate: Dict[str, Any]) -> int:
     """
-    Grades a betting selection into a conviction tier (1, 2, or 3).
+    Grades a betting selection into a conviction tier (1, 2, or 3) purely based on edge and odds.
 
-    Tier 1 (Anchor / Shield)     : High edge (>=6%) with compact odds (<=2.40), or heavy favorite (win rate >=55%, odds <=1.90).
+    Tier 1 (Anchor / Shield)     : High edge (>=6%) with compact odds (<=2.40).
     Tier 2 (Yield Booster)       : Solid confirmed statistical edge (>=5%) within verified odds band (<=3.20).
     Tier 3 (Speculative)         : Long-odds or higher variance selections (>3.20).
     """
     edge = candidate.get("min_edge", 0.0)
     odds = candidate.get("raw_odds", 2.0)
-    win_rate = candidate.get("mu_phat", 0.40)
 
-    if (edge >= 0.06 and odds <= 2.40) or (win_rate >= 0.55 and odds <= 1.90):
+    if edge >= 0.06 and odds <= 2.40:
         return 1
     elif edge >= 0.05 and odds <= 3.20:
         return 2
