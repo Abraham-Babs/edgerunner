@@ -425,6 +425,7 @@ def sync_league_board(page, league_key: str, league_info: dict, matcher: EdgeMat
         if edge_data:
             mu_phat = edge_data["mu_phat"]
             live_ev = (mu_phat * live_odds) - 1.0
+            oos_edge = edge_data.get("oos_edge", 0.0)
             if live_ev >= 0.05:
                 edges_by_week[m_week].append({
                     "match_name": m_name,
@@ -434,6 +435,8 @@ def sync_league_board(page, league_key: str, league_info: dict, matcher: EdgeMat
                     "raw_odds": live_odds,
                     "mu_phat": mu_phat,
                     "min_edge": live_ev,
+                    "oos_edge": oos_edge,
+                    "n_train": edge_data.get("n_train", 0),
                     "btn_idx": it["btn_idx"],
                     "week": m_week,
                     "league": league_key

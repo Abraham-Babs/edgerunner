@@ -182,8 +182,15 @@ class TicketBuilder:
                 best_by_match[key] = edge
 
         min_odds_limit = profile.get("min_odds", 1.45)
-        max_odds_limit = profile.get("max_odds", 2.10)
-        pool = [c for c in best_by_match.values() if min_odds_limit <= c.get("raw_odds", 0.0) <= max_odds_limit]
+        max_odds_limit = profile.get("max_odds", 99.0)
+        
+        def _within_odds_bounds(c):
+            lg = c.get("league", "")
+            min_l = min_odds_limit.get(lg, 1.45) if isinstance(min_odds_limit, dict) else min_odds_limit
+            max_l = max_odds_limit.get(lg, 99.0) if isinstance(max_odds_limit, dict) else max_odds_limit
+            return min_l <= c.get("raw_odds", 0.0) <= max_l
+
+        pool = [c for c in best_by_match.values() if _within_odds_bounds(c)]
         # Sort by Tier ascending (Tier 1 first), then edge (EV) descending, then win probability
         pool.sort(key=lambda x: (x["tier"], -x["min_edge"], -x.get("mu_phat", 0.0)))
 
@@ -200,7 +207,7 @@ class TicketBuilder:
         anchor = imminent_anchors[0] if imminent_anchors else (avail_anchors[0] if avail_anchors else None)
         if anchor:
             anchor_key = get_match_key(anchor)
-            stake = calculate_tier_stake(balance, tier=anchor["tier"], ticket_type="single", odds=anchor["raw_odds"], edge=anchor["min_edge"], n_train=anchor.get("n_train", 300))
+            stake = calculate_tier_stake(balance, tier=anchor["tier"], ticket_type="single", odds=anchor["raw_odds"], edge=anchor.get("oos_edge", 0.0), n_train=anchor.get("n_train", 300))
             tickets.append({
                 "type": "single",
                 "legs": [anchor],
@@ -233,8 +240,9 @@ class TicketBuilder:
                         comb_odds = round(leg1["raw_odds"] * leg2["raw_odds"], 2)
                         if comb_odds <= max_double_odds:
                             avg_e = (leg1["min_edge"] + leg2["min_edge"]) / 2.0
+                            avg_oos = (leg1.get("oos_edge", 0.0) + leg2.get("oos_edge", 0.0)) / 2.0
                             n_tr = min(leg1.get("n_train", 300), leg2.get("n_train", 300))
-                            stake = calculate_tier_stake(balance, tier=2, ticket_type="double", odds=comb_odds, edge=avg_e, n_train=n_tr)
+                            stake = calculate_tier_stake(balance, tier=2, ticket_type="double", odds=comb_odds, edge=avg_oos, n_train=n_tr)
                             tickets.append({
                                 "type": "double",
                                 "legs": [leg1, leg2],
@@ -292,7 +300,7 @@ class TicketBuilder:
             if cand_key in used_matches:
                 continue
 
-            stake = calculate_tier_stake(balance, tier=candidate["tier"], ticket_type="single", odds=candidate["raw_odds"], edge=candidate["min_edge"], n_train=candidate.get("n_train", 300))
+            stake = calculate_tier_stake(balance, tier=candidate["tier"], ticket_type="single", odds=candidate["raw_odds"], edge=candidate.get("oos_edge", 0.0), n_train=candidate.get("n_train", 300))
             tickets.append({
                 "type": "single",
                 "legs": [candidate],
