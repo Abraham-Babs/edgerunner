@@ -27,18 +27,41 @@ import os
 import csv
 import time
 import random
+import uuid
+import subprocess
+import tempfile
+import shutil
 from datetime import datetime
 from typing import Dict, Any, List, Optional
+import pandas as pd
 
 from engine.config import BET_LOG_FILE, SHOTS_DIR, EXCHANGE_USERNAME, EXCHANGE_PASSWORD
 from engine.human_interaction import human_tap, human_type, human_pause
 from engine.parser import clean_page, select_week_tab
+
+def _get_code_version() -> str:
+    try:
+        res = subprocess.run(["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True, check=True)
+        return res.stdout.strip()
+    except Exception:
+        return "unknown"
+
+CODE_VERSION = _get_code_version()
+
+def _sync_root_bet_log():
+    try:
+        root_path = "bet_log.csv"
+        if os.path.abspath(BET_LOG_FILE) != os.path.abspath(root_path) and os.path.exists(BET_LOG_FILE):
+            shutil.copyfile(BET_LOG_FILE, root_path)
+    except Exception:
+        pass
 
 class Bettor:
     def __init__(self, page):
         self.page = page
         self.last_placed_slip_expiry: Optional[int] = None
         self.last_failure_reason: Optional[str] = None
+        self.pending_bets: Dict[str, Any] = {}
         self._ensure_log_header()
 
     def _ensure_log_header(self):
@@ -48,28 +71,51 @@ class Bettor:
                 writer = csv.writer(f)
                 writer.writerow([
                     "timestamp", "ticket_type", "league", "matches", "outcomes",
-                    "combined_odds", "avg_edge", "stake", "status", "receipt_file"
+                    "combined_odds", "avg_edge", "stake", "status", "receipt_file",
+                    "bet_id", "settled_at", "outcome", "returned_amount", "code_version"
                 ])
 
-    def log_bet(self, ticket: Dict[str, Any], status: str, receipt_file: str = ""):
-        matches = "; ".join([l.get("match_name", "") for l in ticket["legs"]])
-        outcomes = "; ".join([l.get("outcome", "") for l in ticket["legs"]])
-        league = ticket["legs"][0].get("league", "") if ticket["legs"] else ""
+    def log_bet(self, ticket: Dict[str, Any], status: str, receipt_file: str = "") -> str:
+        bet_id = str(uuid.uuid4())
+        ts = datetime.utcnow().isoformat()
+        outcome = "PENDING" if status == "CONFIRMED_SUCCESS" else status
+        settled_at = ""
+        returned_amount = 0.0
+
+        matches = "; ".join([l.get("match_name", "") for l in ticket.get("legs", [])])
+        outcomes = "; ".join([l.get("outcome", "") for l in ticket.get("legs", [])])
+        league = ticket.get("legs", [{}])[0].get("league", "") if ticket.get("legs") else ""
 
         with open(BET_LOG_FILE, "a", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
             writer.writerow([
-                datetime.utcnow().isoformat(),
-                ticket["type"],
+                ts,
+                ticket.get("type", ""),
                 league,
                 matches,
                 outcomes,
                 ticket.get("combined_odds", 0.0),
                 round(ticket.get("avg_edge", 0.0), 4),
-                ticket["stake"],
+                ticket.get("stake", 0.0),
                 status,
-                receipt_file
+                receipt_file,
+                bet_id,
+                settled_at,
+                outcome,
+                returned_amount,
+                CODE_VERSION
             ])
+
+        if status == "CONFIRMED_SUCCESS":
+            self.pending_bets[bet_id] = {
+                "match_names": [l.get("match_name", "") for l in ticket.get("legs", []) if l.get("match_name")],
+                "stake": ticket.get("stake", 0.0),
+                "combined_odds": ticket.get("combined_odds", 1.0),
+                "placed_at": ts
+            }
+
+        _sync_root_bet_log()
+        return bet_id
 
     def execute_ticket(self, ticket: Dict[str, Any], dry_run: bool = False, dry_fire: bool = False, max_odds_cap: Optional[float] = None, min_odds_cap: Optional[float] = None) -> bool:
         """
@@ -240,7 +286,7 @@ class Bettor:
                     print(f"[!] REJECTED: Slip timer expired (0s remaining). Aborting to avoid platform lockout.")
                     self.last_failure_reason = "EXPIRED_TIMER"
                     self.capture_diagnostic("slip_timer_expired")
-                    self.log_bet(ticket, status="REJECTED_EXPIRED_0s")
+                    bet_id = self.log_bet(ticket, status="REJECTED_EXPIRED_0s")
                     return False
 
             # Input Stake with resilient input selectors and verified echo assertion
@@ -291,7 +337,7 @@ class Bettor:
                 diag_path = f"{SHOTS_DIR}/dry_fire_slip_{ts}.png"
                 self.page.screenshot(path=diag_path)
                 print(f"[+] [DRY FIRE] Verified full DOM pipeline without betting! Evidence: {diag_path}")
-                self.log_bet(ticket, status="DRY_FIRE_VERIFIED", receipt_file=diag_path)
+                bet_id = self.log_bet(ticket, status="DRY_FIRE_VERIFIED", receipt_file=diag_path)
                 self.clear_betslip_selections()
                 self.close_betslip()
                 return True
@@ -319,17 +365,17 @@ class Bettor:
                     
                     self.last_placed_slip_expiry = slip_sec
                     print(f"[+] Bet successfully placed!")
-                    self.log_bet(ticket, status="CONFIRMED_SUCCESS")
+                    bet_id = self.log_bet(ticket, status="CONFIRMED_SUCCESS")
                     return True
                 else:
                     print("\n[!] ALERT: PLACE BET button not visible on screen! Betting aborted safely.")
                     self.capture_diagnostic("place_bet_missing")
-                    self.log_bet(ticket, status="SUBMISSION_BUTTON_UNAVAILABLE")
+                    bet_id = self.log_bet(ticket, status="SUBMISSION_BUTTON_UNAVAILABLE")
                     return False
             except Exception as e:
                 print(f"\n[!] ALERT: Error during bet submission: {e}")
                 self.capture_diagnostic("submission_exception")
-                self.log_bet(ticket, status=f"SUBMISSION_ERROR: {e}")
+                bet_id = self.log_bet(ticket, status=f"SUBMISSION_ERROR: {e}")
                 return False
         finally:
             self.close_betslip()
@@ -784,12 +830,60 @@ class Bettor:
                         if (/won/i.test(txt)) status = 'WON';
                         else if (/lost/i.test(txt)) status = 'LOST';
                         else if (/void/i.test(txt)) status = 'VOID';
-                        items.push({ text: txt.slice(0, 100), status: status });
+                        items.push({ text: txt.slice(0, 1000), status: status });
                     }
                     return items;
                 }""")
                 if settled_items:
                     print(f"[+] Reconciled {len(settled_items)} platform bet records.")
+                    if self.pending_bets:
+                        updates = {}
+                        for item in settled_items:
+                            c_status = item.get("status")
+                            if c_status in ("PENDING", None):
+                                continue
+                            c_text = item.get("text", "").lower()
+                            matching_ids = []
+                            for p_id, p_info in list(self.pending_bets.items()):
+                                m_names = p_info.get("match_names", [])
+                                if m_names and all(m.lower() in c_text for m in m_names):
+                                    matching_ids.append(p_id)
+
+                            # Skip ambiguous matches (0 or >1)
+                            if len(matching_ids) == 1:
+                                match_id = matching_ids[0]
+                                p_data = self.pending_bets[match_id]
+                                # Calculated payout (stake * combined_odds) since platform card text does not reliably expose net return
+                                ret_amt = round(p_data["stake"] * p_data["combined_odds"], 2) if c_status == "WON" else 0.0
+                                updates[match_id] = {
+                                    "outcome": c_status,
+                                    "settled_at": datetime.utcnow().isoformat(),
+                                    "returned_amount": ret_amt
+                                }
+
+                        if updates and os.path.exists(BET_LOG_FILE):
+                            try:
+                                df = pd.read_csv(BET_LOG_FILE, dtype={"settled_at": str, "outcome": str, "bet_id": str, "code_version": str})
+                                df["settled_at"] = df["settled_at"].fillna("")
+                                df["outcome"] = df["outcome"].fillna("")
+                                for m_id, u_info in updates.items():
+                                    idx = df.index[df["bet_id"] == m_id]
+                                    if len(idx) > 0:
+                                        df.loc[idx, "outcome"] = u_info["outcome"]
+                                        df.loc[idx, "settled_at"] = u_info["settled_at"]
+                                        df.loc[idx, "returned_amount"] = u_info["returned_amount"]
+                                        self.pending_bets.pop(m_id, None)
+
+                                d_name = os.path.dirname(os.path.abspath(BET_LOG_FILE))
+                                with tempfile.NamedTemporaryFile("w", dir=d_name, delete=False, newline="", encoding="utf-8") as tf:
+                                    temp_path = tf.name
+                                df.to_csv(temp_path, index=False)
+                                os.replace(temp_path, BET_LOG_FILE)
+                                _sync_root_bet_log()
+                                print(f"[+] Successfully updated {len(updates)} settled bet(s) in log.")
+                            except Exception as write_err:
+                                print(f"[!] Error updating bet_log with settlement: {write_err}")
+
                 self.close_betslip()
         except Exception:
             pass
