@@ -6,44 +6,37 @@ identified matches with a mathematical advantage.
 
 Tier System:
   Every qualifying selection is graded into one of three conviction tiers
-  based on how strong the statistical edge is, how often the outcome wins,
-  and what the live odds are:
+  based on edge magnitude and odds (no win-rate filter):
 
-  - Tier 1 (Anchor)     : Highest confidence. Edge >= 7%, win rate >= 45%,
-                          odds under 2.80. These are the most reliable plays
-                          and get the largest stake (7% of bankroll).
+  - Tier 1 (Anchor)     : Edge >= 6%, odds <= 2.40. Highest confidence,
+                          staked 4.0%–5.5% of bankroll scaled by edge.
 
-  - Tier 2 (Value)      : Solid confidence. Edge >= 4%, win rate >= 35%,
-                          odds under 3.80. Good risk-reward, staked at 4%
-                          of bankroll.
+  - Tier 2 (Value)      : Edge >= 5%, odds <= 3.20. Solid risk-reward,
+                          staked 2.5%–3.5% of bankroll scaled by edge.
 
-  - Tier 3 (Speculative): Lower certainty — underdogs or higher odds markets
-                          where there is still a positive edge but more
-                          variance. Staked conservatively at 2.5% of bankroll.
+  - Tier 3 (Speculative): Everything else that passed the edge gate.
+                          Staked at 2.0% flat.
+
+  All stakes are multiplied by a confidence scale: min(1.0, n_train / 300),
+  which down-weights edges built on fewer than 300 training observations.
 
 Ticket Mix Strategy (per league visit, up to 3 tickets):
   Priority 1 — Anchor Single:
-    The top Tier 1 selection goes on a single. Maximum bang-for-buck compounding.
-    Stake: 7% of current bankroll.
+    The top Tier 1 selection goes on a single.
 
   Priority 2 — Smart Double (35% random trigger):
-    When a good Tier 1 Anchor and a Tier 2 Booster exist on DIFFERENT matches,
-    they are combined into a double. Combined odds are capped at 6.0 — this was
-    validated by backtesting three scenarios (6.0 / 10.0 / uncapped). The 6.0
-    cap produced the highest ROI because only highly selective doubles pass
-    through (50% win rate), while capital from rejected doubles flows into
-    higher win-rate singles instead. Stake: 4% of bankroll.
+    Tier 1 + Tier 2 from DIFFERENT matches, combined odds capped at
+    the profile's max_double_odds.
 
   Priority 3 — Value Singles:
-    Any remaining matches with positive edges that aren't already used in a
-    ticket are added as singles, sized by their tier.
+    Remaining positive-edge selections not already used in a ticket.
 
 Key Safety Rules:
-  - A match can only appear in ONE ticket. No double-counting the same game.
-  - Stakes are always rounded to the nearest human betting increment
-    (₦10, ₦15, ₦20, ₦25... ₦500) so the amounts look natural.
-  - Total stake per ticket is capped at ₦500 regardless of bankroll size.
+  - A match can only appear in ONE ticket. No double-counting.
+  - Stakes snap to human increments (₦10, ₦15, ₦20 ... ₦500).
+  - Total stake per ticket capped at ₦500 regardless of bankroll.
 """
+
 
 import random
 from typing import List, Dict, Any

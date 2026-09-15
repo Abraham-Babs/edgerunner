@@ -77,13 +77,10 @@ class EdgeMatcher:
         self.lookups: Dict[str, Dict[Tuple[str, str, str], dict]] = {}
         for p_name, p_cfg in PROFILES.items():
             min_e = p_cfg["min_edge"]
-            min_w = p_cfg.get("min_win_rate", 0.0)
 
             lookup = {}
             for row in self.df.itertuples(index=False):
                 if row.min_edge < min_e:
-                    continue
-                if min_w > 0.0 and getattr(row, "mu_phat", 0.0) < min_w:
                     continue
 
                 cfg_min_o = p_cfg.get("min_odds", 1.0)

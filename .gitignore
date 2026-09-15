@@ -28,5 +28,6 @@ binned_parquets/
 *.png
 analysis/screenshots/
 analysis/
+bet_log.csv
 lookup/
 browser_data/

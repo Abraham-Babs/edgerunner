@@ -48,16 +48,16 @@ def walkforward_edges(
     samples, with train_edge, test_edge, oos_t_stat, oos_roi columns.
     """
     d = add_outcome_flags(match_df.sort_values('id').reset_index(drop=True))
-    n = len(d)
-    s = int(n * split)
-    tr, te = d.iloc[:s], d.iloc[s:]
-    tr_groups = {k: v for k, v in tr.groupby('match_name')}
 
     rows = []
-    for fx, g_te in te.groupby('match_name'):
-        if fx not in odds_db or fx not in tr_groups:
+    for fx, g in d.groupby('match_name'):
+        if fx not in odds_db:
             continue
-        g_tr = tr_groups[fx]
+        g = g.sort_values('id').reset_index(drop=True)
+        n_fx = len(g)
+        s_fx = int(n_fx * split)
+        g_tr = g.iloc[:s_fx]
+        g_te = g.iloc[s_fx:]
         if len(g_tr) < min_hits_train or len(g_te) < min_hits_test:
             continue
         for col, (mk, key) in OUTCOME_MARKET_MAP.items():
