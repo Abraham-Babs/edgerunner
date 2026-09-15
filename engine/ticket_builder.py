@@ -81,7 +81,7 @@ def classify_tier(candidate: Dict[str, Any]) -> int:
     else:
         return 3
 
-def calculate_tier_stake(balance: float, tier: int, ticket_type: str, odds: float = 2.0, edge: float = 0.0) -> float:
+def calculate_tier_stake(balance: float, tier: int, ticket_type: str, odds: float = 2.0, edge: float = 0.0, n_train: int = 300) -> float:
     """
     Calculates stake based on bankroll, conviction tier, ticket format, and edge magnitude (Fractional Kelly).
 
@@ -113,6 +113,9 @@ def calculate_tier_stake(balance: float, tier: int, ticket_type: str, odds: floa
 
     else:
         raw = MIN_PLATFORM_STAKE
+
+    confidence_scale = min(1.0, n_train / 300.0)
+    raw = raw * confidence_scale
 
     return quantize_to_human_step(raw)
 
@@ -197,7 +200,7 @@ class TicketBuilder:
         anchor = imminent_anchors[0] if imminent_anchors else (avail_anchors[0] if avail_anchors else None)
         if anchor:
             anchor_key = get_match_key(anchor)
-            stake = calculate_tier_stake(balance, tier=anchor["tier"], ticket_type="single", odds=anchor["raw_odds"], edge=anchor["min_edge"])
+            stake = calculate_tier_stake(balance, tier=anchor["tier"], ticket_type="single", odds=anchor["raw_odds"], edge=anchor["min_edge"], n_train=anchor.get("n_train", 300))
             tickets.append({
                 "type": "single",
                 "legs": [anchor],
@@ -230,7 +233,8 @@ class TicketBuilder:
                         comb_odds = round(leg1["raw_odds"] * leg2["raw_odds"], 2)
                         if comb_odds <= max_double_odds:
                             avg_e = (leg1["min_edge"] + leg2["min_edge"]) / 2.0
-                            stake = calculate_tier_stake(balance, tier=2, ticket_type="double", odds=comb_odds, edge=avg_e)
+                            n_tr = min(leg1.get("n_train", 300), leg2.get("n_train", 300))
+                            stake = calculate_tier_stake(balance, tier=2, ticket_type="double", odds=comb_odds, edge=avg_e, n_train=n_tr)
                             tickets.append({
                                 "type": "double",
                                 "legs": [leg1, leg2],
@@ -288,7 +292,7 @@ class TicketBuilder:
             if cand_key in used_matches:
                 continue
 
-            stake = calculate_tier_stake(balance, tier=candidate["tier"], ticket_type="single", odds=candidate["raw_odds"], edge=candidate["min_edge"])
+            stake = calculate_tier_stake(balance, tier=candidate["tier"], ticket_type="single", odds=candidate["raw_odds"], edge=candidate["min_edge"], n_train=candidate.get("n_train", 300))
             tickets.append({
                 "type": "single",
                 "legs": [candidate],

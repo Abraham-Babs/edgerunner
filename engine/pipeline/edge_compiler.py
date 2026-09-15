@@ -26,7 +26,7 @@ from engine.config import (
 from football_sim.market_evaluator import get_winning_selections
 from engine.pipeline.walkforward import walkforward_edges, OUTCOME_MARKET_MAP
 
-MIN_HITS = 30
+MIN_HITS = 100
 
 def all_outcome_keys() -> list:
     keys = set()
