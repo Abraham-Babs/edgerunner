@@ -24,6 +24,7 @@ from engine.config import (
     PARQUET_DIR, BINNED_PARQUET_DIR, LOOKUP_DIR, RESULTS_DIR
 )
 from football_sim.market_evaluator import get_winning_selections
+from engine.pipeline.walkforward import walkforward_edges, OUTCOME_MARKET_MAP
 
 MIN_HITS = 30
 
@@ -151,13 +152,25 @@ def compile_league_edges(league: str, odds_db: dict) -> pd.DataFrame:
     merged["min_edge"] = merged[["mu_edge", "bin17_edge", "bin27_edge"]].min(axis=1).round(6)
     merged["league"] = league
     
+    # Walk-forward out-of-sample edge validation
+    wf_df = walkforward_edges(df, odds_db.get(league, {}), league)
+    if not wf_df.empty:
+        map_dict = {k: v[1] for k, v in OUTCOME_MARKET_MAP.items()}
+        wf_df["outcome"] = wf_df["outcome"].map(map_dict)
+        wf_cols = ["match_name", "outcome", "oos_roi", "oos_t_stat", "n_train", "n_test"]
+        merged = merged.merge(wf_df[wf_cols], on=["match_name", "outcome"], how="left")
+    else:
+        for c in ["oos_roi", "oos_t_stat", "n_train", "n_test"]:
+            merged[c] = np.nan
+    
     # Re-order columns to match confirmed_edges format
     ordered_cols = [
         "league", "match_name", "outcome", "mu_phat", "fair_prob", "raw_odds",
-        "mu_edge", "bin17_edge", "bin27_edge", "min_edge", "state_17_id", "state_27_id"
+        "mu_edge", "bin17_edge", "bin27_edge", "min_edge", "state_17_id", "state_27_id",
+        "oos_roi", "oos_t_stat", "n_train", "n_test"
     ]
     merged = merged[[c for c in ordered_cols if c in merged.columns]]
-    pos = merged[merged["min_edge"] > 0].copy()
+    pos = merged[(merged["min_edge"] > 0) & (merged["oos_t_stat"].notna()) & (merged["oos_t_stat"] >= 2.0)].copy()
     pos.sort_values("min_edge", ascending=False, inplace=True)
     return pos
 
