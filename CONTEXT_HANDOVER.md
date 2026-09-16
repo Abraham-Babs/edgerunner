@@ -1,139 +1,126 @@
 # PROJECT CONTEXT & HANDOVER: EXCHANGE VIRTUAL VALUE BETTING ENGINE
 
-> **⚠️ LLM Collaborators: ALWAYS use `git` before and after making changes. Branch, commit, review diffs. Read the actual source code — not just docs or comments — before modifying anything. Verify your changes with `--dry-run` before going live.**
+> **⚠️ ALL COLLABORATORS & AGENTS:**
+> 1. ALWAYS use `git` before and after modifying files. Review diffs with `git diff`.
+> 2. Read the actual source code — do NOT make assumptions or rely on stale mental models.
+> 3. Verify changes with `--dry-run` before attempting real money betting.
+> 4. Keep code minimal and clean. No artificial sleeps or Gambler's Fallacy bloat.
+
+---
 
 ## 1. Platform & Leagues
-* **Platform**: SportsExchange Nigeria Scheduled Virtual Football.
-* **Leagues (4)**:
-  * **Premier League (England - league_en)**: 20 teams, 10 matches/round, 180s cycle.
-  * **Primera Liga (Spain - league_es)**: 20 teams, 10 matches/round, 180s cycle.
-  * **Serie League (Italy - league_it)**: 20 teams, 10 matches/round, 180s cycle.
-  * **Bundes League (Germany - league_de)**: 18 teams, 9 matches/round, 90s cycle.
-* **Active Profile**: `ultra_conservative`.
+* **Platform**: SportsExchange Nigeria Scheduled Virtual Football (`sports-exchange.internal`).
+* **Leagues (4 Active)**:
+  * **Premier League (England - `league_en`)**: 20 teams, 10 matches/round, 180s cycle.
+  * **Primera Liga (Spain - `league_es`)**: 20 teams, 10 matches/round, 180s cycle.
+  * **Serie League (Italy - `league_it`)**: 20 teams, 10 matches/round, 180s cycle.
+  * **Bundes League (Germany - `league_de`)**: 18 teams, 9 matches/round, 90s cycle.
+* **Default Active Profile**: `ultra_conservative`.
 
 ---
 
-## 2. Edge Pipeline
+## 2. Architecture: Decoupled Discovery + Targeted Browser Execution
 
-### Edge Compilation (`engine/pipeline/edge_compiler.py`)
-- Ingests match parquets + `h2h_odds.json`.
-- Fits empirical hit rates per matchup/outcome.
-- **MIN_HITS = 100** (minimum observations to qualify).
+The engine operates on a clean two-tier architecture:
 
-### Walk-Forward Validation (`engine/pipeline/walkforward.py`)
-- Per-matchup 70/30 chronological split. Each fixture's own historical observations are split chronologically so newly introduced teams get evaluated rather than dropped by global date cutoffs.
-- OOS portion measures real forward performance.
-- **Gate**: Only edges with `oos_t_stat >= 2.0` pass into `confirmed_edges.csv`.
-- Each confirmed edge carries: `min_edge`, `oos_roi`, `oos_t_stat`, `n_train`.
-
-### Per-League Odds Bands (`config.py` → `PROFILES`)
-- Each league has its own `min_odds` and `max_odds`, calibrated via `engine/pipeline/band_sweep.py`.
-- Example (ultra_conservative):
-  * league_en (England): 2.00 – 3.20
-  * league_de (Germany): 1.50 – 5.00
-  * league_es (Spain): 1.45 – 3.50
-  * league_it (Italy): 1.45 – 3.50
+```
+┌─────────────────────────────────────────────────────────────┐
+│ 1. HIGH-SPEED HTTP/2 DISCOVERY (engine/discovery/client.py) │
+│    - Scans all 4 leagues concurrently in ~1.5s via HTTP/2   │
+│    - Syncs SportsExchange server clock skew via HTTP Date header   │
+│    - Matches odds against Poisson bivariate lambda models    │
+│    - Caches qualified +EV edges in MasterBoard memory pool  │
+└──────────────────────────────┬──────────────────────────────┘
+                               │ (Only if qualified tickets exist)
+┌──────────────────────────────▼──────────────────────────────┐
+│ 2. TARGETED PLAYWRIGHT EXECUTION (engine/bettor.py)         │
+│    - Launches headless Chromium disguised as Itel A6611L    │
+│    - Native mobile touch dispatch: element.tap() + jitter   │
+│    - Preloader & modal overlay purger (parser.clean_page)   │
+│    - In-betslip 4-point assertion & stake echo validation   │
+│    - Intercepts and captures screenshot evidence in dry-run │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## 3. Edge Matching (Runtime)
+## 3. Statistical Edge Pipeline & Math Model
 
-`EdgeMatcher` (`engine/edge_matcher.py`) loads `confirmed_edges.csv` at startup and builds a lookup keyed by `(league, match_name, outcome)`.
+### Edge Computation & Poisson Validation
+- Live odds across 1X2, Double Chance, and Over/Under are cross-checked against bivariate Poisson models (`matchup_lambdas_cat_*.parquet`).
+- Expected Value: $\text{EV} = (\text{Model Probability} \times \text{Live Odds}) - 1$.
+- `ultra_conservative` requires $\text{EV} \ge +5\%$ statistical advantage.
 
-**Filters applied per profile**:
-- `min_edge` threshold.
-- Per-league `min_odds` / `max_odds` bands.
-
-**No win-rate filter exists.** Selection is purely edge + odds band.
-
-Auto-reloads when `h2h_odds.json` changes (triggers recompilation).
+### Per-League Calibrated Odds Bands (`engine/config.py`)
+Odds outside these boundaries are rejected to avoid low-liquidity or heavily raked bookmaker traps:
+- `league_en` (England): `2.00 – 3.20`
+- `league_de` (Germany): `1.50 – 5.00`
+- `league_es` (Spain): `1.45 – 3.50`
+- `league_it` (Italy): `1.45 – 3.50`
 
 ---
 
 ## 4. Conviction Tiers & Stake Sizing
 
-### Tier Classification (`ticket_builder.py → classify_tier`)
-Based on **edge and odds only**:
-
-| Tier | Edge | Max Odds |
-|------|------|----------|
-| 1 (Anchor) | ≥ 6% | ≤ 2.40 |
-| 2 (Value) | ≥ 5% | ≤ 3.20 |
-| 3 (Speculative) | Below above | Any |
-
-### Stake Sizing (`ticket_builder.py → calculate_tier_stake`)
-
-| Type | Base Rate | Scaled Up To | Scaling Driver |
-|------|-----------|-------------|----------------|
-| Tier 1 Single | 4.0% | 5.5% | `edge - 0.06` |
-| Tier 2 Single | 2.5% | 3.5% | `edge - 0.04` |
-| Tier 3 Single | 2.0% | 2.0% (flat) | — |
-| Double | 2.5% | 3.5% | `edge - 0.06` |
-| Treble | ₦10 flat | ₦10 flat | — |
-
-**Confidence Scaling**: `min(1.0, n_train / 300)` — stakes are proportionally reduced for edges with fewer than 300 training observations.
-
-**OOS Edge Sizing**: `runner.py` propagates `oos_edge` to candidates. Kelly fraction uses OOS edge, not raw in-sample edge.
-
-**Human Steps**: All stakes snap to `₦10, ₦15, ₦20 ... ₦500`.
+### Tier Classification (`engine/ticket_builder.py`)
+- **Tier 1 (Anchor)**: $\text{EV} \ge 6\%$, Odds $\le 2.40$ → Base stake 4.0% of bankroll.
+- **Tier 2 (Value)**: $\text{EV} \ge 5\%$, Odds $\le 3.20$ → Base stake 2.5%–3.5% of bankroll.
+- **Tier 3 (Speculative)**: Any confirmed edge → 2.0% flat.
+- **Smart Doubles**: Combined odds $\le 2.80$–$3.00$ → 2.5%–3.5% stake.
+- **Human Increments**: Stakes snap cleanly to steps: `₦10, ₦15, ₦20, ₦25 ... ₦500`.
 
 ---
 
-## 5. Risk Management (`runner.py → RiskManager`)
+## 5. Risk Management (`engine/runner.py → RiskManager`)
 
-### Portfolio Modes (by True Equity = Cash + In-Play Stakes)
+Virtual football is an independent, memoryless RNG process (i.i.d.).
+**Gambler's Fallacy heuristics (streak cool-offs, artificial loss pauses, profit breathers) have been permanently purged.**
 
-| Equity | Mode | Max Tickets | Doubles | Trebles |
-|--------|------|-------------|---------|---------|
-| < ₦1,200 | BEDROCK_SHIELD | 2 | Yes (≤2.80 odds) | No |
-| ₦1,200 – ₦5,999 | CORE_GROWTH | 2 | Yes (≤3.00 odds) | No |
-| ≥ ₦6,000 | EXPANSION_RATCHET | 3 | Yes (≤3.50 odds) | Yes |
+The system relies strictly on quantitative capital controls:
 
-### Circuit Breakers
-- **25% Drawdown**: Dynamic monitoring polls balance every 25s; resumes on recovery.
-- **Hard Floor**: ₦100 or 50% session loss → engine terminates.
-- **7 Consecutive Losses**: 12-minute cool-off pause.
-- **Match Dedup**: Exposure keyed by `"{league} | {match_name}"` — no duplicate exposure.
-- **Max Concurrent**: 10 active pending bets across all leagues.
+| Equity (`Live Cash + In-Play`) | Mode | Max Tickets/Cycle | Max In-Play Exposure |
+|---|---|---|---|
+| `< ₦1,200` | **BEDROCK_SHIELD** | 2 | Max 4 active tickets (~14% total bankroll) |
+| `₦1,200 – ₦5,999` | **CORE_GROWTH** | 2 | Max 4 active tickets |
+| `≥ ₦6,000` | **EXPANSION_RATCHET**| 3 | Max 10 active tickets (satellites enabled) |
 
----
-
-## 6. Bet Execution & Logging (`engine/bettor.py`)
-
-### DOM Validation (3-Point)
-- Badge count assertion after odds tap.
-- Stake input echo verification before Place Bet.
-- Pre-click odds parity ±0.02.
-
-### Settlement Logging
-- Logs to `analysis/results/bet_log.csv`.
-- Fields: `bet_id`, `outcome`, `returned_amount`, `code_version`, plus standard ticket fields.
-- Settlement reconciliation runs each engine cycle.
+### Non-Negotiable Capital Shields:
+1. **~85% Bankroll Cash Shield**: Per-bet staking (3%–4%) combined with the 4-ticket cap guarantees ~85% of capital remains liquid and protected from simultaneous loss.
+2. **Hard Stop-Loss Floor**: If True Equity breaches `< ₦100` or drops `50%` below starting capital, the engine triggers a hard emergency termination.
+3. **Consecutive Failure Alert**: If 3 bet submission attempts fail consecutively, self-healing triggers; if 6 fail, the engine aborts to protect against site redesigns.
 
 ---
 
-## 7. Critical Engineering Fixes (DO NOT REVERT)
-1. **Betslip drawer close**: `button[data-testid="betslip-header-title-close-icon"]` + `(332, 84)` + Escape fallback.
-2. **Post-tap badge assertion**: Retries tap if badge stays at 0.
-3. **Stake echo assertion**: Auto-clears and retypes on mismatch.
-4. **Relaxed countdown**: True 0s boundary (`slip_sec <= 0`).
-5. **No candidate blacklisting**: Engine self-corrects modal state instead of dropping candidates.
-6. **Network route aborts**: `*free2play*`, `*premier-game*`, `*exchange-core-account*` blocked at network level.
-7. **Stateful market assertion**: Checks `selected-market-name` before odds clicks.
-8. **Vertical week bounding**: Fixtures bounded between `<p>Week X</p>` headers.
-9. **Mobile tab auto-scroll**: Off-screen sub-tabs scrolled into view automatically.
+## 6. Critical Engineering Gotchas & Invariants (DO NOT REVERT)
+
+1. **Native Mobile Touch Dispatch (`element.tap()`):**
+   SportsExchange's mobile web app operates with `has_touch=True`. Standard desktop `page.mouse.click()` or `click(force=True)` **will NOT trigger odds selections**. Always use `element.tap()` (with fallback to `click(force=True)`).
+2. **Astro Preloader Overlay (`z-[99999999]`):**
+   SportsExchange injects an `<astro-island component-export="Preloader">` that covers the entire screen. `parser.clean_page(page)` removes this overlay. Always run `clean_page()` before UI interactions.
+3. **Analytics & Ad Tracker Route Aborting:**
+   Nigerian ISP latency causes `page.goto()` to hang indefinitely on third-party tracking pixels. [runner.py](file:///c:/Users/Zaddy/Documents/Analyst/engine/runner.py) aborts `google-analytics`, `doubleclick`, `facebook`, `bing`, `t.co`, and `opera` tracking requests.
+4. **Phone Login Format:**
+   `.env` `EXCHANGE_USERNAME` must be a 10-digit number. If provided with a leading `0` (11 digits), [bettor.py](file:///c:/Users/Zaddy/Documents/Analyst/engine/bettor.py) strips the leading zero automatically to match the input mask.
+5. **Betslip Drawer Scoping:**
+   Do not query generic `div[class*="drawer"]`—SportsExchange has a hidden standings drawer that matches this selector. Always scope to `[data-testid="betslip-header"]` and its parent tree.
+6. **Unified `--dry-run` and `dry_fire` Flag:**
+   `bettor.execute_ticket()` checks `if dry_fire or dry_run:` to ensure that `--dry-run` halts before the final "PLACE BET" tap, saves screenshot proof, and clears the slip without deducting money.
+7. **Settled Bets Endpoint:**
+   Settled bets can be retrieved via HTTP from:
+   `/en-ng/my-bets/virtuals/settled?_data=routes%2F%28%24locale%29.my-bets.virtuals.%24betsType`
 
 ---
 
-## 8. Startup
+## 7. How to Run the Engine
 
-```bash
-# Live
-.venv\Scripts\python -u engine/runner.py --profile ultra_conservative
+Always activate virtual environment first:
+```powershell
+# 1. Run live dry-fire test (0 real money, captures UI screenshot evidence)
+.venv\Scripts\python -u -m engine.runner --profile ultra_conservative --dry-run --max-rounds 1
 
-# Dry-run
-.venv\Scripts\python -u engine/runner.py --profile ultra_conservative --dry-run
+# 2. Run continuous live autonomous betting (real money)
+.venv\Scripts\python -u -m engine.runner --profile ultra_conservative
 
-# Limited rounds
-.venv\Scripts\python -u engine/runner.py --profile ultra_conservative --max-rounds 5
+# 3. Fast unauthenticated HTTP discovery diagnostics
+.venv\Scripts\python scratch/test_discovery_client.py
 ```

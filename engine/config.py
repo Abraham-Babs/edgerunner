@@ -157,19 +157,9 @@ HUMAN_STAKE_STEPS = [
     175, 200, 250, 300, 400, 500
 ]
 
-# Balanced Risk & Defensive Circuit Breakers
-MAX_DRAWDOWN_PCT = 0.25         # If settled balance drops 25% from peak, take defensive sleep
-DRAWDOWN_SLEEP_SECONDS = 900    # Sleep 15 minutes on drawdown to break variance, then resume
-CONSECUTIVE_LOSS_LIMIT = 7     # Trigger cool-off after 7 losses
-COOL_OFF_SECONDS = 720         # 12 minutes cool-off
-PROFIT_BREATHER_GAIN = 0.50    # +50% session gain triggers a brief breather
-PROFIT_BREATHER_SECONDS = 300  # 5 minutes breather
-
-# Active Exposure Control (Pacing & Liquidity Protection)
-MAX_ACTIVE_PENDING_BETS = 10   # 3/league × ~3 active leagues = ~9-10 concurrent; doubles compress slot usage
-LEAGUE_MATCH_DURATION = 90     # Approximate match duration in seconds before settlement
-SETTLEMENT_POLL_INTERVAL = 30  # Poll balance every 30s during cool-off/drawdown to wake up immediately
-MAX_CONSECUTIVE_FAILURES = 3   # Sound noisy alert if 3 bet attempts fail consecutively
+# Active Exposure & Liquidity Controls
+MAX_ACTIVE_PENDING_BETS = 10   # Maximum concurrent in-play bets across all leagues
+MAX_CONSECUTIVE_FAILURES = 3   # Alert if 3 bet attempts fail consecutively
 
 
 

@@ -1,34 +1,25 @@
 """
 engine/runner.py
 ----------------
-The brain of the operation. This is the main loop that runs continuously,
-cycling through all four virtual football leagues on SportsExchange and placing
-bets wherever the numbers say there is a genuine edge.
+The brain of the operation. Orchestrates concurrent HTTP/2 discovery across
+all four virtual football leagues, cross-references live odds against statistical
+Poisson models, constructs positive-EV tickets, and executes them via Playwright.
 
-How it works, in plain terms:
-  1. The engine opens a mobile browser session (disguised as a real Android phone)
-     and navigates to each league page in a randomized order each cycle.
-  2. It reads the live match fixtures and current odds directly off the screen.
-  3. Those odds are cross-checked against our statistical model — only bets
-     where the expected return is mathematically positive are considered.
-  4. Qualifying bets are assembled into a smart ticket mix: high-confidence
-     singles, anchor+booster doubles, and value singles — sized by tier.
-  5. A Risk Manager tracks everything: how much money is currently in play
-     (even unsettled), running peak balance, consecutive losses, and
-     whether we're in a drawdown. If we dip 25% from peak, the engine
-     pauses and polls the balance every 25 seconds, resuming the moment
-     a win lands and equity recovers — no wasted waiting time.
-  6. Up to 10 bets can be active simultaneously across all four leagues,
-     which gives the strategy room to breathe while keeping total
-     exposure under control (roughly 45% of bankroll at any given time).
-  7. Human-like behavior is injected throughout: random pauses, scroll
-     movements, tap jitter, and occasional 'browse and pass' rounds
-     where we look but don't bet.
+Execution Architecture:
+  1. Discovery: Unauthenticated HTTP/2 polls all 4 leagues concurrently in ~1.5s,
+     syncing with server clock skew and caching positive-EV edges into MasterBoard.
+  2. Model: Odds are cross-checked against Poisson lambda models — only bets
+     with mathematically positive expected value (+EV) are qualified.
+  3. Execution: Browser opens only when qualified tickets exist, using mobile touch
+     tap events, preloader purging, and zero-tolerance in-betslip validation.
+  4. Capital Protection: Pure fractional bankroll allocation (3-4% per bet,
+     preserving ~85% in cash) with hard liquidation stop-loss floor. No artificial
+     cooldowns or streak pauses on memoryless RNG rounds.
 
 Runtime options:
-  --profile     : 'conservative', 'balanced' (default), or 'expansive'
-  --dry-run     : Simulate tickets without placing real money (testing mode)
-  --max-rounds  : Stop after N full 4-league cycles. 0 = run forever.
+  --profile     : 'ultra_conservative' (default), 'conservative', or 'balanced'
+  --dry-run     : Simulate tickets and capture screenshot verification without betting
+  --max-rounds  : Stop after N cycles. 0 = run forever.
 """
 
 import os
@@ -44,42 +35,33 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, ROOT)
 
 from engine.config import (
-    LEAGUES, USER_DATA_DIR, ITEL_USER_AGENT, SHOTS_DIR,
-    CONSECUTIVE_LOSS_LIMIT, COOL_OFF_SECONDS,
-    PROFIT_BREATHER_GAIN, PROFIT_BREATHER_SECONDS, MAX_ACTIVE_PENDING_BETS,
-    SETTLEMENT_POLL_INTERVAL, MAX_CONSECUTIVE_FAILURES
+    LEAGUES, USER_DATA_DIR, ITEL_USER_AGENT,
+    MAX_ACTIVE_PENDING_BETS, MAX_CONSECUTIVE_FAILURES
 )
 from engine.edge_matcher import EdgeMatcher
 from engine.ticket_builder import TicketBuilder
 from engine.master_board import MasterBoard
-from engine.parser import clean_page, parse_round_countdown, extract_all_markets, extract_live_matches_and_buttons, extract_visible_weeks
-from engine.human_interaction import human_pause, human_scroll
+from engine.discovery.client import PublicDiscoveryClient
 from engine.bettor import Bettor
+from engine.parser import clean_page
+from engine.human_interaction import human_pause
 
 class RiskManager:
     """
-    Manages all financial risk during a live session.
+    Manages account capital and exposure limits during live execution.
 
     Key responsibilities:
-    - Tracks the 'True Equity' of the account at all times. True Equity
-      means the cash balance PLUS the value of stakes currently in unsettled
-      bets. This prevents false drawdown alarms while bets are still running.
-    - Monitors the peak balance and triggers a defensive pause if the account
-      falls 25% below that peak.
-    - When a drawdown is triggered, the engine does NOT stop — it enters a
-      dynamic monitoring loop, checking the balance every 25 seconds and
-      waking up immediately once wins land and equity recovers.
-    - Detects prolonged losing streaks (7+ consecutive losses) and applies
-      a cool-off pause to break the streak pattern before resuming.
-    - Sounds a loud terminal alert if multiple bet submissions fail in a row,
-      so issues can be caught and addressed without needing to watch logs.
+    - Tracks 'True Equity' (liquid balance + pending unsettled stakes).
+    - Hard stop-loss liquidation protection: terminates immediately if equity
+      falls below 50% of starting capital or ₦100.
+    - Manages portfolio mode and stake sizing based on active true equity.
+    - Limits total concurrent in-play tickets (max 4 in ultra_conservative).
     """
     def __init__(self, initial_balance: float):
         self.initial_balance = initial_balance
         self.peak_balance = initial_balance
         self.consecutive_losses = 0
         self.consecutive_failures = 0
-        self.profit_breather_taken = False
         self.active_bets = []  # Tracks currently unsettled bets: [{timestamp, stake, league}]
 
     def clean_expired_bets(self):
@@ -181,15 +163,6 @@ class RiskManager:
             print("!"*60 + "\a\a\n")
             return "STOP_LOSS"
 
-        gain = ((current_balance - self.initial_balance) / self.initial_balance) if self.initial_balance > 0 else 0.0
-        if gain >= PROFIT_BREATHER_GAIN and not self.profit_breather_taken:
-            print("\n" + "="*60)
-            print(f"[+] PROFIT MILESTONE REACHED: +{gain*100:.1f}% Session Gain!")
-            print(f"    Starting: ₦{self.initial_balance:,.2f} -> Now: ₦{current_balance:,.2f}")
-            print(f"    Compounding edge uninterrupted (no artificial sleep).")
-            print("="*60 + "\n")
-            self.profit_breather_taken = True
-
         return "OK"
 
     def record_bet_result(self, won: bool):
@@ -197,13 +170,6 @@ class RiskManager:
             self.consecutive_losses = 0
         else:
             self.consecutive_losses += 1
-            if self.consecutive_losses >= CONSECUTIVE_LOSS_LIMIT:
-                print("\n" + "="*60)
-                print(f"[!] DEFENSIVE COOL-OFF: {self.consecutive_losses} consecutive losses.")
-                print(f"    Action: Sleeping for {COOL_OFF_SECONDS//60} minutes to break down-streak.")
-                print("="*60 + "\a\n")
-                time.sleep(COOL_OFF_SECONDS)
-                self.consecutive_losses = 0
 
     def record_submission_attempt(self, success: bool) -> str:
         if success:
@@ -297,18 +263,17 @@ def get_live_balance(page, retries: int = 3) -> float:
         page.wait_for_timeout(400)
     return _last_known_balance
 
-def safe_navigate_or_reload(page, url: str, bettor: Bettor = None, max_retries: int = 3, timeout_ms: int = 25000) -> bool:
+def safe_navigate_or_reload(page, url: str, bettor: Bettor = None, max_retries: int = 3, timeout_ms: int = 35000) -> bool:
     """
     Resilient navigation designed for high-latency / jittery networks.
-    Ensures the page has actually landed on sports-exchange.internal and is not stuck on about:blank.
+    Ensures the page has actually landed on sports-exchange.internal and hydrated required interactive elements.
     """
     for attempt in range(1, max_retries + 1):
         try:
-            page.goto(url, wait_until="commit", timeout=timeout_ms)
-            page.wait_for_timeout(random.randint(1800, 2600))
+            page.goto(url, wait_until="domcontentloaded", timeout=timeout_ms)
             if page.url and not page.url.startswith("about:") and "sports-exchange.internal" in page.url:
                 try:
-                    page.locator("button:has-text('Week ')").first.wait_for(state="visible", timeout=12000)
+                    page.locator('[data-testid="match-odd"], button:has-text("Week ")').first.wait_for(state="visible", timeout=20000)
                 except Exception:
                     pass
                 clean_page(page)
@@ -316,12 +281,11 @@ def safe_navigate_or_reload(page, url: str, bettor: Bettor = None, max_retries: 
         except Exception as e:
             print(f"[!] Network error (attempt {attempt}/{max_retries}) navigating to {url}: {e}")
             if attempt < max_retries:
-                backoff = attempt * 2
+                backoff = attempt * 3
                 print(f"[*] Re-navigating in {backoff}s...")
                 time.sleep(backoff)
                 try:
-                    page.goto(url, wait_until="commit", timeout=timeout_ms)
-                    page.wait_for_timeout(random.randint(1800, 2600))
+                    page.goto(url, wait_until="domcontentloaded", timeout=timeout_ms)
                     if page.url and not page.url.startswith("about:") and "sports-exchange.internal" in page.url:
                         clean_page(page)
                         return True
@@ -331,101 +295,6 @@ def safe_navigate_or_reload(page, url: str, bettor: Bettor = None, max_retries: 
         bettor.capture_diagnostic("network_failure")
     return False
 
-def sync_league_board(page, league_key: str, league_info: dict, matcher: EdgeMatcher, master_board: MasterBoard, bettor: Bettor, portfolio_mode: dict):
-    """
-    Synchronizes positive-EV edges for a single league into the rolling Master Board.
-    1. Checks countdown: if expired or <= 2s, triggers a clean reload to avoid stale DOM.
-    2. Identifies on-screen visible rounds.
-    3. Prunes any concluded or kicked-off rounds from the board.
-    4. Explicitly taps and scrapes any newly unlocked missing rounds.
-    """
-    if not safe_navigate_or_reload(page, league_info["url"], bettor=bettor):
-        print(f"[-] Skipping sync for {league_info['name']} due to persistent network timeout.")
-        return
-
-    human_pause(0.5, 1.0)
-
-    # 1. Stale timer check: if round is at 00:00 or <= 2s, reload to pull fresh server rounds
-    cd = parse_round_countdown(page)
-    if cd is not None and cd <= 2:
-        print(f"[*] {league_info['name']}: Round kickoff detected ({cd}s left). Refreshing page for fresh carousel...")
-        page.reload(wait_until="commit", timeout=10000)
-        page.wait_for_timeout(random.randint(1500, 2200))
-        clean_page(page)
-        cd = parse_round_countdown(page)
-
-    # 2. Identify visible weeks on screen
-    visible_weeks = extract_visible_weeks(page)
-    if not visible_weeks:
-        visible_weeks = {"Week 1"}
-
-    def parse_week_num(w_str: str) -> int:
-        nums = [int(s) for s in w_str.split() if s.isdigit()]
-        return nums[0] if nums else 0
-
-    sorted_weeks = sorted(list(visible_weeks), key=parse_week_num)
-
-    # 3. Prune concluded rounds from cache
-    master_board.prune_expired_weeks(league_key, visible_weeks)
-
-    # 4. Check for newly unlocked rounds that need scraping
-    missing_weeks = [w for w in sorted_weeks if not master_board.has_week(league_key, w)]
-
-    if not missing_weeks:
-        print(f"[*] {league_info['name']}: All visible rounds ({', '.join(sorted_weeks)}) cached. Skipping tab crawl.")
-        return
-
-    print(f"[*] {league_info['name']}: Scraping new/updated rounds: {missing_weeks}")
-
-    primary_profile = portfolio_mode["profile"]
-    allow_cons = portfolio_mode["allow_conservative"]
-    cycle_sec = league_info.get("round_cycle_sec", 180)
-    now = time.time()
-    base_cd = cd if (cd is not None and cd > 0) else cycle_sec
-
-    # Extract all markets once and group strictly by each fixture's true week
-    market_items = extract_all_markets(page, matcher=matcher, league_key=league_key)
-    edges_by_week = {w: [] for w in sorted_weeks}
-
-    for it in market_items:
-        m_week = it.get("week")
-        if not m_week or m_week not in edges_by_week:
-            continue
-        m_name = it["match_name"]
-        outcome_key = it["outcome_key"]
-        live_odds = it["odds"]
-
-        edge_data = matcher.find_edge(league_key, m_name, outcome_key, profile_name=primary_profile)
-        if not edge_data and allow_cons:
-            edge_data = matcher.find_edge(league_key, m_name, outcome_key, profile_name="conservative")
-
-        if edge_data:
-            mu_phat = edge_data["mu_phat"]
-            live_ev = (mu_phat * live_odds) - 1.0
-            oos_edge = edge_data.get("oos_edge", 0.0)
-            if live_ev >= 0.05:
-                edges_by_week[m_week].append({
-                    "match_name": m_name,
-                    "category": it["category"],
-                    "tab_name": it["tab_name"],
-                    "outcome": outcome_key,
-                    "raw_odds": live_odds,
-                    "mu_phat": mu_phat,
-                    "min_edge": live_ev,
-                    "oos_edge": oos_edge,
-                    "n_train": edge_data.get("n_train", 0),
-                    "btn_idx": it["btn_idx"],
-                    "week": m_week,
-                    "league": league_key
-                })
-
-    for w in sorted_weeks:
-        if w in missing_weeks or not master_board.has_week(league_key, w):
-            week_idx = sorted_weeks.index(w) if w in sorted_weeks else 0
-            calculated_ko = now + base_cd + (week_idx * cycle_sec)
-            master_board.set_week_edges(league_key, w, edges_by_week[w], kickoff_epoch=calculated_ko)
-
-    print(f"[+] {league_info['name']}: Board synced ({master_board.total_count()} active edges across all leagues).")
 
 def execute_master_board_bets(page, matcher: EdgeMatcher, builder: TicketBuilder, bettor: Bettor, risk: RiskManager, master_board: MasterBoard, portfolio_mode: dict, balance: float, dry_run: bool = False):
     """
@@ -550,6 +419,7 @@ def run_loop(profile: str = "ultra_conservative", dry_run: bool = False, max_rou
     matcher = EdgeMatcher(profile_name=profile)
     builder = TicketBuilder()
     master_board = MasterBoard()
+    discovery_client = PublicDiscoveryClient(timeout=25.0)
     league_keys = list(LEAGUES.keys())
 
     with sync_playwright() as p:
@@ -566,10 +436,16 @@ def run_loop(profile: str = "ultra_conservative", dry_run: bool = False, max_rou
             args=["--disable-blink-features=AutomationControlled"]
         )
         page = context.pages[0] if context.pages else context.new_page()
-        # Permanently block promotional popups, game modals and iframes at network level
+        # Permanently block promotional popups, game modals, iframes, and trackers at network level
         page.route("**/*free2play*", lambda r: r.abort())
         page.route("**/*premier-game*", lambda r: r.abort())
         page.route("**/*exchange-core-account.workers.dev*", lambda r: r.abort())
+        page.route("**/*google*analytics*", lambda r: r.abort())
+        page.route("**/*doubleclick*", lambda r: r.abort())
+        page.route("**/*facebook*", lambda r: r.abort())
+        page.route("**/*bing*", lambda r: r.abort())
+        page.route("**/*t.co*", lambda r: r.abort())
+        page.route("**/*px.oa.opera.com*", lambda r: r.abort())
         bettor = Bettor(page)
         attach_wallet_listener(page)
 
@@ -628,20 +504,21 @@ def run_loop(profile: str = "ultra_conservative", dry_run: bool = False, max_rou
                 print(f"│  True Equity       : ₦{portfolio_mode['true_equity']:>10,.2f} | Mode: {portfolio_mode['name']:<18}│")
                 print(f"└──────────────────────────────────────────────────────────────────┘")
 
-                # 2. Phase 1: Rolling sync across all 4 leagues
-                shuffled_leagues = league_keys.copy()
-                random.shuffle(shuffled_leagues)
+                # 2. Phase 1: Fast HTTP discovery sync across all 4 leagues (no browser navigation)
+                try:
+                    disc_payload = discovery_client.discover_all_leagues(
+                        matcher,
+                        profile_name=portfolio_mode["profile"],
+                        allow_conservative=portfolio_mode["allow_conservative"]
+                    )
+                    master_board.sync_from_discovery(disc_payload)
+                    total_cand = master_board.total_count()
+                    proto = disc_payload.get("active_protocol", "HTTP")
+                    print(f"[+] Master Board synced via {proto}: {total_cand} active positive-EV edge(s) cached.")
+                except Exception as e:
+                    print(f"\n[!] ALERT: Exception during HTTP discovery sync: {e}")
 
-                for l_key in shuffled_leagues:
-                    l_info = LEAGUES[l_key]
-                    try:
-                        sync_league_board(page, l_key, l_info, matcher, master_board, bettor, portfolio_mode)
-                    except Exception as e:
-                        print(f"\n[!] ALERT: Exception syncing {l_info['name']}: {e}")
-                        bettor.capture_diagnostic(f"crash_{l_key}")
-                    human_pause(1.0, 2.5)
-
-                # 3. Phase 2: Master cross-league ticket execution
+                # 3. Phase 2: Master cross-league ticket execution (Browser touches DOM only when tickets exist)
                 try:
                     execute_master_board_bets(page, matcher, builder, bettor, risk, master_board, portfolio_mode, balance, dry_run=dry_run)
                 except Exception as e:
@@ -662,6 +539,7 @@ def run_loop(profile: str = "ultra_conservative", dry_run: bool = False, max_rou
         except KeyboardInterrupt:
             print("\n[*] Engine gracefully stopped by user.")
         finally:
+            discovery_client.close()
             context.close()
 
 if __name__ == "__main__":

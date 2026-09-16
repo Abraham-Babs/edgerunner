@@ -215,30 +215,41 @@ class Bettor:
                     "button:has-text('Betslip')",
                     "a[href*='betslip']"
                 ]
-                for sel in betslip_selectors:
-                    el = self.page.locator(sel).first
-                    if el.count() > 0 and el.is_visible(timeout=1000):
-                        human_tap(el, self.page)
-                        break
+                if not self.is_betslip_open():
+                    for sel in betslip_selectors:
+                        el = self.page.locator(sel).first
+                        if el.count() > 0 and el.is_visible(timeout=1000):
+                            try:
+                                el.tap()
+                            except Exception:
+                                el.click(force=True)
+                            break
+                    self.page.wait_for_timeout(800)
 
-                # Wait for stake input to become visible in drawer without toggling back closed
+                # Dismiss expired events banner if present
+                rem_exp = self.page.locator("button:has-text('REMOVE EXPIRED'), button:has-text('Remove Expired')").first
+                if rem_exp.count() > 0 and rem_exp.is_visible(timeout=1000):
+                    print("[*] Detected expired events banner. Tapping REMOVE EXPIRED...")
+                    rem_exp.click(force=True)
+                    self.page.wait_for_timeout(600)
+
+                # Wait for stake input to become visible in drawer
                 stake_field = self.page.locator('input[data-testid="betslip-stake-amount"], input[inputmode="decimal"]').first
                 try:
-                    stake_field.wait_for(state="visible", timeout=3500)
+                    stake_field.wait_for(state="visible", timeout=6000)
                 except Exception:
                     pass
+
+                # Hard gate: betslip must be open before proceeding
+                if not self.is_betslip_open():
+                    print(f"[!] REJECTED: Betslip drawer did not open after tap. Aborting ticket.")
+                    self.last_failure_reason = "BETSLIP_NOT_OPEN"
+                    self.capture_diagnostic("betslip_not_open")
+                    return False
             except Exception as e:
                 print(f"\n[!] ALERT: Failed to open betslip: {e}")
                 self.capture_diagnostic("betslip_open_error")
                 return False
-
-            # Dismiss expired events banner if present
-            rem_exp = self.page.locator("button:has-text('REMOVE EXPIRED'), button:has-text('Remove Expired')").first
-            if rem_exp.count() > 0 and rem_exp.is_visible(timeout=800):
-                print("[*] Detected expired events banner. Tapping REMOVE EXPIRED...")
-                self.last_failure_reason = "EXPIRED_BANNER"
-                human_tap(rem_exp, self.page)
-                self.page.wait_for_timeout(800)
 
             # Explicitly select Singles vs Multiple / Acca tab based on ticket type
             if ticket_type == "single":
@@ -271,12 +282,23 @@ class Bettor:
 
             # Assert all match names exist in betslip drawer
             drawer_text = self.page.evaluate("""() => {
-                const drawer = document.querySelector('div[class*="drawer"], div.fixed.inset-0, [data-testid*="betslip"]');
-                return drawer ? (drawer.innerText || '') : '';
+                const header = document.querySelector('[data-testid="betslip-header"]');
+                if (header) {
+                    let curr = header;
+                    while (curr.parentElement && curr.parentElement !== document.body) {
+                        curr = curr.parentElement;
+                    }
+                    return curr.innerText || '';
+                }
+                const all = Array.from(document.querySelectorAll('div'));
+                const bs = all.find(d => (d.innerText || '').includes('VIRTUALS BETSLIP') && (d.innerText || '').includes('PLACE BET'));
+                return bs ? bs.innerText : (document.body.innerText || '');
             }""")
             for leg in legs:
                 exp_match = leg.get("match_name", "")
-                if exp_match and exp_match not in drawer_text:
+                teams = [t.strip() for t in exp_match.split("-")] if "-" in exp_match else [exp_match.strip()]
+                matched = (exp_match in drawer_text) or all(t in drawer_text for t in teams)
+                if exp_match and not matched:
                     print(f"[!] REJECTED: Slip missing expected leg {exp_match}. Aborting bet.")
                     self.last_failure_reason = "MATCH_MISMATCH"
                     self.capture_diagnostic("match_mismatch_rejected")
@@ -337,8 +359,8 @@ class Bettor:
                 self.capture_diagnostic("stake_entry_error")
                 return False
 
-            # Intercept if DRY FIRE: take verification screenshot and safely abort before submit
-            if dry_fire:
+            # Intercept if DRY FIRE / DRY RUN: take verification screenshot and safely abort before submit
+            if dry_fire or dry_run:
                 ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
                 diag_path = f"{SHOTS_DIR}/dry_fire_slip_{ts}.png"
                 self.page.screenshot(path=diag_path)
@@ -659,6 +681,7 @@ class Bettor:
     def select_market(self, category: str, tab_name: str) -> bool:
         """Switches the league view to the requested market category and sub-tab, verifying active indicator."""
         try:
+            clean_page(self.page)
             # Check if active market indicator already matches
             cur_market = self.page.locator('span[data-testid="selected-market-name"]').first
             if cur_market.count() > 0:
@@ -666,127 +689,89 @@ class Bettor:
                 if tab_name.lower() in cm.lower() or cm.lower() in tab_name.lower():
                     return True
 
-            # 1. Try clicking tab in horizontal pill bar
-            tab_el = self.page.locator(f"li:has-text('{tab_name}'), p:has-text('{tab_name}'), button:has-text('{tab_name}')").first
+            # 1. Primary: click tab in market-selector-tab bar
+            tab_el = self.page.locator('[data-testid="market-selector-tab"]').filter(has_text=tab_name).first
+            if tab_el.count() == 0:
+                tab_el = self.page.locator(f"li:has-text('{tab_name}'), button:has-text('{tab_name}')").first
+
             if tab_el.count() > 0:
                 try:
                     tab_el.scroll_into_view_if_needed(timeout=1000)
                 except Exception:
                     pass
-                if tab_el.is_visible(timeout=800):
-                    human_tap(tab_el, self.page)
-                    self.page.wait_for_timeout(400)
-                    if cur_market.count() > 0:
-                        cm = (cur_market.inner_text() or '').strip()
-                        if tab_name.lower() in cm.lower() or cm.lower() in tab_name.lower():
-                            return True
+                tab_el.click(force=True)
+                self.page.wait_for_timeout(600)
+                return True
 
-            # 2. If not active, open More Markets dropdown and pick category
+            # 2. Fallback: More Markets dropdown
             mm = self.page.locator("text='More Markets'").first
             if mm.count() > 0 and mm.is_visible(timeout=500):
-                human_tap(mm, self.page)
+                mm.click(force=True)
                 self.page.wait_for_timeout(350)
-                cat_el = self.page.locator(f"li:has-text('{category}'), button:has-text('{category}'), p:has-text('{category}')").first
+                cat_el = self.page.locator(f"li:has-text('{category}'), button:has-text('{category}')").first
                 if cat_el.count() > 0 and cat_el.is_visible(timeout=800):
-                    human_tap(cat_el, self.page)
+                    cat_el.click(force=True)
                     self.page.wait_for_timeout(400)
-                    sub_el = self.page.locator(f"button:has-text('{tab_name}'), li:has-text('{tab_name}'), p:has-text('{tab_name}')").first
+                    sub_el = self.page.locator(f"button:has-text('{tab_name}'), li:has-text('{tab_name}')").first
                     if sub_el.count() > 0:
-                        try:
-                            sub_el.scroll_into_view_if_needed(timeout=1000)
-                            self.page.wait_for_timeout(200)
-                        except Exception:
-                            pass
-                        human_tap(sub_el, self.page)
+                        sub_el.click(force=True)
                         self.page.wait_for_timeout(500)
-                        if cur_market.count() > 0:
-                            cm = (cur_market.inner_text() or '').strip()
-                            if tab_name.lower() in cm.lower() or cm.lower() in tab_name.lower():
-                                return True
+                        return True
         except Exception:
             pass
         return False
 
     def click_fixture_button(self, match_name: str, btn_idx: int, week: str = None, tab_name: str = None, expected_odds: float = None) -> bool:
-        """Finds match row on screen strictly within target week boundary and asserts odds before clicking."""
-        # Ensure any betslip drawer or overlay is closed so odds table is unobstructed
+        """Finds match row on screen using Playwright native locators, asserts odds, and clicks."""
         if self.is_betslip_open():
             self.close_betslip()
             self.page.wait_for_timeout(300)
 
         try:
-            res = self.page.evaluate(r"""({mName, bIdx, wName, expOdds}) => {
-                const weekHeaders = Array.from(document.querySelectorAll('p')).filter(p => {
-                    return /^Week\s+\d+$/i.test((p.innerText || '').trim()) && !p.closest('button');
-                });
-                
-                let targetHeader = null;
-                let nextHeader = null;
-                for (let i = 0; i < weekHeaders.length; i++) {
-                    const txt = (weekHeaders[i].innerText || '').trim();
-                    if (txt === wName || txt.startsWith(wName)) {
-                        targetHeader = weekHeaders[i];
-                        nextHeader = weekHeaders[i + 1] || null;
-                        break;
-                    }
-                }
-                
-                let startY = 0;
-                let endY = 999999;
-                if (targetHeader) {
-                    targetHeader.scrollIntoView();
-                    startY = targetHeader.getBoundingClientRect().top + window.scrollY - 10;
-                    endY = nextHeader ? (nextHeader.getBoundingClientRect().top + window.scrollY) : 999999;
-                }
-                
-                const candidateRows = Array.from(document.querySelectorAll('div')).filter(d => {
-                    if (d.children.length > 6) return false;
-                    const txt = d.innerText || '';
-                    const codes = txt.match(/[A-Z]{3}/g) || [];
-                    if (codes.length === 2 && txt.includes('-')) {
-                        const key = codes[0] + ' - ' + codes[1];
-                        if (key === mName) {
-                            const rect = d.getBoundingClientRect();
-                            const absY = rect.top + window.scrollY;
-                            if (!targetHeader || (absY >= startY && absY < endY)) {
-                                return true;
-                            }
-                        }
-                    }
-                    return false;
-                });
-                
-                for (const r of candidateRows) {
-                    const btns = Array.from(r.querySelectorAll('button[data-testid="match-odd"], button'));
-                    const oddBtns = btns.filter(b => /^\d+\.\d+$/.test((b.innerText || '').trim()));
-                    if (oddBtns.length > bIdx) {
-                        const btn = oddBtns[bIdx];
-                        const btnVal = parseFloat(btn.innerText.trim().replace(/,/g, ''));
-                        // PRE-CLICK ASSERTION: Odds must match expected_odds
-                        if (expOdds !== null && expOdds !== undefined && !isNaN(expOdds)) {
-                            if (Math.abs(btnVal - expOdds) > 0.02) {
-                                return false;
-                            }
-                        }
-                        btn.scrollIntoView?.({ block: "center", inline: "center" });
-                        btn.click();
-                        const rect = btn.getBoundingClientRect();
-                        return { success: true, x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-                    }
-                }
-                return false;
-            }""", {"mName": match_name, "bIdx": btn_idx, "wName": week, "expOdds": expected_odds})
-            if res and isinstance(res, dict) and res.get("success"):
-                # Micro-pause and verify if betslip badge registered
-                self.page.wait_for_timeout(300)
-                badge_cnt = self.get_betslip_badge_count()
-                if badge_cnt == 0 and res.get("x") and res.get("y"):
-                    # Fallback real mouse tap if synthetic click didn't trigger React state
-                    self.page.mouse.click(res["x"], res["y"])
-                    self.page.wait_for_timeout(400)
-                return True
-            return bool(res)
-        except Exception:
+            # 1. Parse teams from match_name (e.g. 'COM - NAP' -> ['COM', 'NAP'])
+            teams = [t.strip() for t in match_name.split("-")] if "-" in match_name else [match_name.strip()]
+
+            # 2. Locate specific fixture row container (div.flex.items-center.justify-between)
+            # Must contain both teams and match-odd buttons, avoiding ancestor container scope
+            rows = self.page.locator("div.flex.items-center.justify-between")
+            for t in teams:
+                rows = rows.filter(has_text=t)
+
+            rows = rows.filter(has=self.page.locator('[data-testid="match-odd"]'))
+
+            if rows.count() == 0:
+                # Fallback: search anywhere in document for match container with match-odd buttons
+                rows = self.page.locator("div").filter(has_text=match_name).filter(has=self.page.locator('[data-testid="match-odd"]'))
+                if rows.count() == 0:
+                    return False
+
+            row = rows.first
+            odd_btns = row.locator('[data-testid="match-odd"]')
+            if odd_btns.count() <= btn_idx:
+                return False
+
+            btn = odd_btns.nth(btn_idx)
+            btn.scroll_into_view_if_needed(timeout=3000)
+
+            # Pre-click odds assertion
+            if expected_odds is not None:
+                try:
+                    btn_val = float(btn.inner_text().strip().replace(",", ""))
+                    if abs(btn_val - expected_odds) > 0.05:
+                        print(f"[*] Odds shifted for {match_name}: live={btn_val} vs expected={expected_odds}")
+                        return False
+                except Exception:
+                    pass
+
+            # 3. Perform native Playwright tap/click to register mobile touch event
+            try:
+                btn.tap()
+            except Exception:
+                btn.click(force=True)
+            self.page.wait_for_timeout(600)
+            return True
+        except Exception as e:
+            print(f"[-] Error clicking odds button for {match_name}: {e}")
             return False
 
     def get_betslip_total_odds(self) -> Optional[float]:
@@ -923,30 +908,34 @@ class Bettor:
     def ensure_authenticated(self) -> bool:
         """Checks if session is active; attempts automatic login if credentials exist in .env."""
         try:
-            login_btn = self.page.locator("button:has-text('LOGIN'), a:has-text('LOGIN'), [data-testid*='login']").first
-            if login_btn.count() == 0 or not login_btn.is_visible(timeout=1000):
+            login_btn = self.page.locator("button:has-text('LOGIN'), a:has-text('LOGIN')").first
+            if login_btn.count() == 0 or not login_btn.is_visible(timeout=1500):
                 return True
 
             if not EXCHANGE_USERNAME or not EXCHANGE_PASSWORD:
                 print("[!] Notice: Logged out state detected and no credentials found in .env.")
                 return False
 
-            print("[*] Logged out state detected. Attempting automated login with .env credentials...")
+            print("[*] Logged out state detected. Attempting automated login with phone number...")
             human_tap(login_btn, self.page)
             self.page.wait_for_timeout(1500)
 
-            user_input = self.page.locator("input[type='text'], input[type='tel'], input[placeholder*='Mobile' i], input[placeholder*='Username' i]").first
-            pass_input = self.page.locator("input[type='password']").first
+            user_input = self.page.locator("[data-testid='txt-username'], input[name='username']").first
+            pass_input = self.page.locator("[data-testid='txt-password'], input[name='password']").first
 
-            if user_input.is_visible(timeout=2000) and pass_input.is_visible(timeout=2000):
-                human_type(user_input, EXCHANGE_USERNAME)
+            if user_input.is_visible(timeout=3000) and pass_input.is_visible(timeout=3000):
+                phone = EXCHANGE_USERNAME.strip()
+                if phone.startswith("0") and len(phone) == 11:
+                    phone = phone[1:]
+
+                human_type(user_input, phone)
                 human_pause(0.2, 0.4)
                 human_type(pass_input, EXCHANGE_PASSWORD)
-                human_pause(0.3, 0.6)
+                human_pause(0.3, 0.5)
 
-                submit = self.page.locator("button[type='submit'], button:has-text('LOGIN'), button:has-text('Log In')").first
+                submit = self.page.locator("button[data-testid*='highlight'], button:has-text('LOGIN'):not([data-testid*='nav'])").last
                 human_tap(submit, self.page)
-                self.page.wait_for_timeout(3500)
+                self.page.wait_for_timeout(6000)
 
                 if self.page.locator("button:has-text('LOGIN'), a:has-text('LOGIN')").count() == 0:
                     print("[+] Auto-login successful! Session authenticated.")

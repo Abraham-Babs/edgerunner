@@ -25,8 +25,8 @@ from typing import Dict, List, Any, Optional, Set
 import random
 CLEANUP_SCRIPT = """
 () => {
-    // 1. Remove free2play iframe and astro-island promotional wrapper
-    document.querySelectorAll('astro-island, iframe[title="Free to Play"]').forEach(el => el.remove());
+    // 1. Remove free2play iframe, astro preloader, and promo wrappers
+    document.querySelectorAll('astro-island[component-export="Preloader"], div[class*="z-[99999999]"], div[class*="tw-z-[99999999]"], iframe[title="Free to Play"]').forEach(el => el.remove());
     document.querySelectorAll('iframe').forEach(f => {
         if (f.src.includes('free2play') || f.src.includes('premier-game') || f.src.includes('exchange-core-account')) {
             f.remove();

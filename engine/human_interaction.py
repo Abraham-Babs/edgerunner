@@ -57,12 +57,25 @@ def human_tap(element, page: Any = None):
             # Short pre-touch hover/aim
             time.sleep(random.uniform(0.15, 0.35))
             
-            if page:
+            if hasattr(element, "tap"):
+                try:
+                    element.tap()
+                except Exception:
+                    if page:
+                        page.mouse.click(jitter_x, jitter_y, delay=random.randint(40, 110))
+                    else:
+                        element.click(force=True)
+            elif page and hasattr(page, "touchscreen"):
+                page.touchscreen.tap(jitter_x, jitter_y)
+            elif page:
                 page.mouse.click(jitter_x, jitter_y, delay=random.randint(40, 110))
             else:
                 element.click(force=True)
         else:
-            element.click(force=True)
+            try:
+                element.tap()
+            except Exception:
+                element.click(force=True)
     except Exception:
         try:
             element.click(force=True)

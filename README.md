@@ -15,8 +15,8 @@ Historical match data for each league is processed through a multi-stage pipelin
 2. **Walk-Forward Validator** (`engine/pipeline/walkforward.py`): Splits data chronologically 70/30. Edges must demonstrate positive OOS ROI with `oos_t_stat >= 2.0` to be confirmed. This prevents in-sample overfitting from reaching production.
 3. **Output**: `analysis/results/confirmed_edges.csv` — each row carries `min_edge`, `oos_roi`, `oos_t_stat`, and `n_train` metadata.
 
-### 2. Live Odds Verification
-Every cycle, the engine scrapes actual live odds off the SportsExchange page. The edge is re-validated at the current price. If odds have shifted and the edge is gone, the selection is skipped.
+### 2. High-Speed HTTP/2 Discovery
+Instead of slow, fragile browser page scraping across 4 leagues, the engine polls SportsExchange's raw virtuals endpoints concurrently via unauthenticated HTTP/2 in ~1.5 seconds (`engine/discovery/client.py`). It syncs server clock skew and continuously updates the active candidate pool, immediately evicting concluded rounds.
 
 ### 3. Per-League Odds Bands
 Each league has independently calibrated `min_odds` / `max_odds` in `config.py`, derived from odds-band sweeps (`engine/pipeline/band_sweep.py`). This excludes negative-EV zones that differ by league.
@@ -45,31 +45,32 @@ The engine maintains an in-memory sliding window across all 4 leagues:
 - Micro-trebles combine 3 anchor legs across 3 distinct leagues.
 - Candidates sorted by **Tier → Edge descending**.
 
-### 6. In-Betslip Validation & Human Emulation
-- Betslip drawer dismissal guard with selector + coordinate + Escape fallback.
-- Badge count assertion after odds tap.
+### 6. In-Betslip Validation & Mobile Touch Emulation
+- Native mobile `tap()` dispatch (bypassing desktop synthetic mouse limitations on SportsExchange mobile web).
+- Spatial jitter and randomized micro-pauses within button bounds.
 - Stake input echo verification before Place Bet.
-- Pre-click parity check (screen odds ±0.02 of expected).
-- Vertical week bounding between `<p>Week X</p>` headers.
-- Mobile horizontal tab auto-scroll.
-- Network route aborts for promotional overlays.
+- Pre-click odds shift guard (aborts if odds shifted >0.05).
+- In-betslip total odds double-check (aborts if combined odds differ >0.02).
+- Team code and match name presence verification on betslip selection cards.
+- Network-level tracker and promo overlay aborts for high-latency resilience.
 
-### 7. Risk Management
-True Equity = `Live Cash + In-Play Stakes`. Portfolio mode governed by equity:
+### 7. Risk Management (Pure Mathematical Model)
+True Equity = `Live Cash + In-Play Stakes`.
+In an independent RNG process (i.i.d.), each round is memoryless. The system relies strictly on capital preservation:
 
 | Equity | Mode | Max Tickets/Cycle | Notes |
 |--------|------|-------------------|-------|
-| < ₦1,200 | BEDROCK_SHIELD | 2 | No trebles, max 4 concurrent bets |
-| ₦1,200 – ₦5,999 | CORE_GROWTH | 2 | No trebles |
+| < ₦1,200 | BEDROCK_SHIELD | 2 | No trebles, max 4 concurrent bets, ~85% bankroll protected in cash |
+| ₦1,200 – ₦5,999 | CORE_GROWTH | 2 | No trebles, max 4 concurrent bets |
 | ≥ ₦6,000 | EXPANSION_RATCHET | 3 | Trebles + satellite plays enabled |
 
-- **25% Drawdown Pause**: Dynamic monitoring loop polls balance every 25s, resumes instantly on recovery.
-- **Hard Floor**: Engine terminates if balance drops below ₦100 or 50% session loss.
-- **Match-Level Dedup**: Exposure keyed by `"{league} | {match_name}"` — no double-counting.
-- **Network Resilience**: Auto-reconnect on DNS/connection failures; page reload on unexpected errors.
+- **Fractional Staking**: Sized at 3%–4% per bet, capping total live exposure to ~15% of bankroll.
+- **Hard Floor**: Automatic immediate shutdown if equity drops below ₦100 or 50% of initial deposit.
+- **No Gambler's Fallacy**: Zero artificial streak cool-offs or profit breathers that interrupt positive-EV compounding.
+- **Match-Level Dedup**: Exposure keyed by `"{league} | {match_name}"` — no duplicate exposure.
 
 ### 8. Settlement Logging
-Bet outcomes are logged to `analysis/results/bet_log.csv` with `bet_id`, `outcome`, `returned_amount`, and `code_version`. Settlement reconciliation runs each cycle.
+Bet outcomes are logged to `analysis/results/bet_log.csv` with `bet_id`, `outcome`, `returned_amount`, and `code_version`. Settlement reconciliation runs each cycle via the settled bets endpoint.
 
 ---
 
@@ -77,13 +78,13 @@ Bet outcomes are logged to `analysis/results/bet_log.csv` with `bet_id`, `outcom
 
 ```bash
 # Live autonomous engine
-.venv\Scripts\python -u engine/runner.py --profile ultra_conservative
+.venv\Scripts\python -u -m engine.runner --profile ultra_conservative
 
-# Dry-run (scrapes live odds, validates DOM, zero real money)
-.venv\Scripts\python -u engine/runner.py --profile ultra_conservative --dry-run
+# Dry-run (stages live odds, verifies betslip & stake, zero real money)
+.venv\Scripts\python -u -m engine.runner --profile ultra_conservative --dry-run
 
 # Limit to N cycles
-.venv\Scripts\python -u engine/runner.py --profile ultra_conservative --max-rounds 5
+.venv\Scripts\python -u -m engine.runner --profile ultra_conservative --dry-run --max-rounds 5
 ```
 
 ---
@@ -95,19 +96,10 @@ engine/
   runner.py              — Orchestrator. Main loop, risk management, portfolio modes.
   master_board.py        — In-memory sliding window cache for all leagues/rounds.
   ticket_builder.py      — Assembles singles, doubles, trebles with Kelly sizing.
-  bettor.py              — Executes tickets on SportsExchange mobile UI. Settlement logging.
-  parser.py              — Scrapes live fixtures, odds, and round timers.
+  bettor.py              — Executes tickets on SportsExchange mobile UI with touch dispatch.
+  discovery/             — HTTP/2 concurrent odds discovery and clock skew sync.
+  parser.py              — DOM cleanup, preloader removal, tab selection.
   edge_matcher.py        — Loads confirmed edges, validates live odds against them.
-  human_interaction.py   — Spatial jitter, natural pauses, human touch simulation.
-  config.py              — Profiles, per-league odds bands, thresholds.
-  scheduler.py           — Round scheduling utilities.
-
-engine/pipeline/
-  edge_compiler.py       — Fits hit rates, computes edges, exports confirmed_edges.csv.
-  walkforward.py         — 70/30 chronological OOS validation (t-stat filtering).
-  band_sweep.py          — Per-league odds band calibration.
-
-engine/tests/
-  backtest_tiers.py      — Historical tier/stake backtesting harness.
-  backtest_compare.py    — A/B comparison of staking strategies.
+  human_interaction.py   — Spatial jitter, natural pauses, mobile touch simulation.
+  config.py              — Profiles, per-league odds bands, capital thresholds.
 ```
