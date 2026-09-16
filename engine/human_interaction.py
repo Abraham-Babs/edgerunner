@@ -31,7 +31,7 @@ def human_scroll(page, distance: int = 150):
     try:
         delta_y = distance * random.choice([1, -1]) if distance > 0 else distance
         page.mouse.wheel(0, delta_y)
-        time.wait_for_timeout(random.randint(300, 700)) if hasattr(page, 'wait_for_timeout') else time.sleep(0.5)
+        page.wait_for_timeout(random.randint(300, 700)) if hasattr(page, 'wait_for_timeout') else time.sleep(0.5)
     except Exception:
         pass
 

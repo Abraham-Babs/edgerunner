@@ -12,9 +12,13 @@ import pandas as pd
 # Outcome column -> (market_name_in_odds_json, selection_key_in_odds_json)
 OUTCOME_MARKET_MAP = {
     'H': ('1X2', '1x2_1_val'), 'D': ('1X2', '1x2_x_val'), 'A': ('1X2', '1x2_2_val'),
+    '1X': ('Double Chance', 'double_chance_1x_val'),
+    '12': ('Double Chance', 'double_chance_12_val'),
+    'X2': ('Double Chance', 'double_chance_x2_val'),
     'O1.5': ('Total O/U 1.5', 'o_u_1_5_ov_val'), 'U1.5': ('Total O/U 1.5', 'o_u_1_5_un_val'),
     'O2.5': ('Total O/U 2.5', 'o_u_2_5_ov_val'), 'U2.5': ('Total O/U 2.5', 'o_u_2_5_un_val'),
     'O3.5': ('Total O/U 3.5', 'o_u_3_5_ov_val'), 'U3.5': ('Total O/U 3.5', 'o_u_3_5_un_val'),
+    'O4.5': ('Total O/U 4.5', 'o_u_4_5_ov_val'), 'U4.5': ('Total O/U 4.5', 'o_u_4_5_un_val'),
     'GG': ('BTTS (GG/NG)', 'gg_ng_gg_val'), 'NG': ('BTTS (GG/NG)', 'gg_ng_ng_val'),
 }
 
@@ -23,8 +27,11 @@ def add_outcome_flags(df: pd.DataFrame) -> pd.DataFrame:
     df['H'] = (df.home_team_score > df.away_team_score).astype(int)
     df['D'] = (df.home_team_score == df.away_team_score).astype(int)
     df['A'] = (df.home_team_score < df.away_team_score).astype(int)
+    df['1X'] = (df.home_team_score >= df.away_team_score).astype(int)
+    df['12'] = (df.home_team_score != df.away_team_score).astype(int)
+    df['X2'] = (df.home_team_score <= df.away_team_score).astype(int)
     tot = df.home_team_score + df.away_team_score
-    for L in [1.5, 2.5, 3.5]:
+    for L in [1.5, 2.5, 3.5, 4.5]:
         df[f'O{L}'] = (tot > L).astype(int)
         df[f'U{L}'] = (tot < L).astype(int)
     df['GG'] = ((df.home_team_score > 0) & (df.away_team_score > 0)).astype(int)

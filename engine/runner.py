@@ -45,7 +45,7 @@ sys.path.insert(0, ROOT)
 
 from engine.config import (
     LEAGUES, USER_DATA_DIR, ITEL_USER_AGENT, SHOTS_DIR,
-    MAX_DRAWDOWN_PCT, DRAWDOWN_SLEEP_SECONDS, CONSECUTIVE_LOSS_LIMIT, COOL_OFF_SECONDS,
+    CONSECUTIVE_LOSS_LIMIT, COOL_OFF_SECONDS,
     PROFIT_BREATHER_GAIN, PROFIT_BREATHER_SECONDS, MAX_ACTIVE_PENDING_BETS,
     SETTLEMENT_POLL_INTERVAL, MAX_CONSECUTIVE_FAILURES
 )
@@ -114,33 +114,6 @@ class RiskManager:
     def can_place_bet(self) -> bool:
         self.clean_expired_bets()
         return len(self.active_bets) < MAX_ACTIVE_PENDING_BETS
-
-    def dynamic_sleep_until_settled(self, page, max_wait_sec: int = 600) -> float:
-        """
-        Called when the account equity has dropped below the 25% drawdown threshold.
-        Instead of stopping cold or sleeping for a fixed duration, this method
-        actively monitors the live balance every 25 seconds.
-
-        The moment a pending bet wins and the balance recovers above the drawdown
-        line, this method returns immediately and the engine resumes betting.
-        This avoids the common problem of sitting idle while good rounds pass.
-
-        If the balance hasn't recovered after max_wait_sec (default: 10 minutes),
-        the engine resets its peak reference and continues with a fresh baseline.
-        """
-        print(f"[*] Entering dynamic monitoring: checking balance as matches conclude...")
-        start_t = time.time()
-        while time.time() - start_t < max_wait_sec:
-            time.sleep(25)
-            # Re-read live balance
-            bal = get_live_balance(page)
-            print(f"[*] Dynamic check: Current Live Balance: ₦{bal:,.2f} (Peak: ₦{self.peak_balance:,.2f})")
-            drawdown = (self.peak_balance - bal) / self.peak_balance
-            if drawdown < MAX_DRAWDOWN_PCT:
-                print(f"[+] Win detected! Drawdown recovered to {drawdown*100:.1f}%. Resuming betting immediately.")
-                return bal
-
-        return get_live_balance(page)
 
     def get_portfolio_mode(self, current_balance: float) -> dict:
         self.clean_expired_bets()
@@ -292,10 +265,14 @@ def get_live_balance(page, retries: int = 3) -> float:
         try:
             res = page.evaluate(f"""async (url) => {{
                 try {{
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 4000);
                     const resp = await fetch(url, {{
                         method: 'GET',
-                        headers: {{ 'Accept': 'application/json, text/plain, */*' }}
+                        headers: {{ 'Accept': 'application/json, text/plain, */*' }},
+                        signal: controller.signal
                     }});
+                    clearTimeout(timeoutId);
                     if (!resp.ok) return {{ ok: false, status: resp.status }};
                     const data = await resp.json();
                     return {{ ok: true, data: data }};

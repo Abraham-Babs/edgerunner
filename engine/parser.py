@@ -22,7 +22,7 @@ Three main jobs:
 import re
 import time
 from typing import Dict, List, Any, Optional, Set
-
+import random
 CLEANUP_SCRIPT = """
 () => {
     // 1. Remove free2play iframe and astro-island promotional wrapper
@@ -290,90 +290,18 @@ def extract_all_markets(page, matcher=None, league_key: Optional[str] = None, ta
     POPULAR_OTHER_TABS = {
         "Double Chance": ["double_chance_1x_val", "double_chance_12_val", "double_chance_x2_val"],
         "O/U 2.5": ["o_u_2_5_ov_val", "o_u_2_5_un_val"],
-        "GG/NG": ["gg_ng_gg_val", "gg_ng_ng_val"],
-        "Correct Score": [
-            "correct_score_1_0_val", "correct_score_2_0_val", "correct_score_2_1_val",
-            "correct_score_3_0_val", "correct_score_3_1_val", "correct_score_3_2_val",
-            "correct_score_4_0_val", "correct_score_4_1_val", "correct_score_4_2_val",
-            "correct_score_5_0_val", "correct_score_5_1_val", "correct_score_6_0_val",
-            "correct_score_0_0_val", "correct_score_1_1_val", "correct_score_2_2_val",
-            "correct_score_3_3_val",
-            "correct_score_0_1_val", "correct_score_0_2_val", "correct_score_1_2_val",
-            "correct_score_0_3_val", "correct_score_1_3_val", "correct_score_0_4_val",
-            "correct_score_2_3_val", "correct_score_0_5_val", "correct_score_1_4_val",
-            "correct_score_2_4_val", "correct_score_0_6_val", "correct_score_1_5_val"
-        ]
+        "GG/NG": ["gg_ng_gg_val", "gg_ng_ng_val"]
     }
     for tab_name, keys in POPULAR_OTHER_TABS.items():
         if has_edge_for_keys(keys):
             _scrape_tab("Popular", tab_name, keys)
 
-    # More Markets categories
+    # More Markets categories (only high-frequency, low-vig totals)
     CATEGORIES = {
         "Over/Under": {
             "O/U 1.5": ["o_u_1_5_ov_val", "o_u_1_5_un_val"],
             "O/U 3.5": ["o_u_3_5_ov_val", "o_u_3_5_un_val"],
             "O/U 4.5": ["o_u_4_5_ov_val", "o_u_4_5_un_val"]
-        },
-        "Home Goals": {
-            "Home O/U 0.5": ["home_o_u_0_5_ov_val", "home_o_u_0_5_un_val"],
-            "Home O/U 1.5": ["home_o_u_1_5_ov_val", "home_o_u_1_5_un_val"],
-            "Home O/U 2.5": ["home_o_u_2_5_ov_val", "home_o_u_2_5_un_val"],
-            "Home O/U 3.5": ["home_o_u_3_5_ov_val"],
-            "Home Clean Sheet": ["home_clean_sheet_yes_val", "home_clean_sheet_no_val"]
-        },
-        "Away Goals": {
-            "Away O/U 0.5": ["away_o_u_0_5_ov_val", "away_o_u_0_5_un_val"],
-            "Away O/U 1.5": ["away_o_u_1_5_ov_val", "away_o_u_1_5_un_val"],
-            "Away O/U 2.5": ["away_o_u_2_5_ov_val"],
-            "Away O/U 3.5": ["away_o_u_3_5_ov_val"],
-            "Away Clean Sheet": ["away_clean_sheet_yes_val", "away_clean_sheet_no_val"]
-        },
-        "1X2 & GG/NG": {
-            "1X2 & GG": [
-                "1x2_gg_1_gg_val", "1x2_gg_1_ng_val",
-                "1x2_gg_x_gg_val", "1x2_gg_x_ng_val",
-                "1x2_gg_2_gg_val", "1x2_gg_2_ng_val"
-            ]
-        },
-        "1X2 & O/U 1.5": {
-            "1X2 & O/U 1.5": [
-                "1x2_o_u_1_5_1_ov_val", "1x2_o_u_1_5_1_un_val",
-                "1x2_o_u_1_5_x_ov_val", "1x2_o_u_1_5_x_un_val",
-                "1x2_o_u_1_5_2_ov_val", "1x2_o_u_1_5_2_un_val"
-            ]
-        },
-        "1X2 & O/U 2.5": {
-            "1X2 & O/U 2.5": [
-                "1x2_o_u_2_5_1_ov_val", "1x2_o_u_2_5_1_un_val",
-                "1x2_o_u_2_5_x_ov_val", "1x2_o_u_2_5_x_un_val",
-                "1x2_o_u_2_5_2_ov_val", "1x2_o_u_2_5_2_un_val"
-            ]
-        },
-        "HT/FT": {
-            "HT/FT": [
-                "ht_ft_1_1_val", "ht_ft_1_x_val", "ht_ft_1_2_val",
-                "ht_ft_x_1_val", "ht_ft_x_x_val", "ht_ft_x_2_val",
-                "ht_ft_2_1_val", "ht_ft_2_x_val", "ht_ft_2_2_val"
-            ]
-        },
-        "Half Time": {
-            "HT 1X2": ["ht_1x2_1_val", "ht_1x2_x_val", "ht_1x2_2_val"],
-            "Goal Goal HT": ["goal_goal_ht_yes_val", "goal_goal_ht_no_val"]
-        },
-        "Total Goals": {
-            "Total Goals": [
-                "total_goals_0_val", "total_goals_1_val", "total_goals_2_val",
-                "total_goals_3_val", "total_goals_4_val", "total_goals_5_val",
-                "total_goals_6_val"
-            ]
-        },
-        "Correct Score": {
-            "HT Correct Score": [
-                "ht_correct_score_1_0_val", "ht_correct_score_2_0_val", "ht_correct_score_2_1_val", "ht_correct_score_3_0_val",
-                "ht_correct_score_0_0_val", "ht_correct_score_1_1_val",
-                "ht_correct_score_0_1_val", "ht_correct_score_0_2_val", "ht_correct_score_1_2_val", "ht_correct_score_0_3_val"
-            ]
         }
     }
 

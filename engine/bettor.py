@@ -240,12 +240,20 @@ class Bettor:
                 human_tap(rem_exp, self.page)
                 self.page.wait_for_timeout(800)
 
-            # If single ticket and multiple tabs appear, explicitly select Singles tab
+            # Explicitly select Singles vs Multiple / Acca tab based on ticket type
             if ticket_type == "single":
                 try:
                     s_tab = self.page.locator("button:has-text('Singles'), p:has-text('Singles')").first
                     if s_tab.count() > 0 and s_tab.is_visible(timeout=300):
                         human_tap(s_tab, self.page)
+                        self.page.wait_for_timeout(300)
+                except Exception:
+                    pass
+            elif ticket_type in ("double", "treble"):
+                try:
+                    m_tab = self.page.locator("button:has-text('Multiple'), button:has-text('Multiples'), p:has-text('Multiple'), p:has-text('Multiples'), button:has-text('Acca')").first
+                    if m_tab.count() > 0 and m_tab.is_visible(timeout=300):
+                        human_tap(m_tab, self.page)
                         self.page.wait_for_timeout(300)
                 except Exception:
                     pass
@@ -261,17 +269,15 @@ class Bettor:
                 self.close_betslip()
                 return False
 
-            # Assert match name on betslip card
-            slip_match = self.page.evaluate("""() => {
+            # Assert all match names exist in betslip drawer
+            drawer_text = self.page.evaluate("""() => {
                 const drawer = document.querySelector('div[class*="drawer"], div.fixed.inset-0, [data-testid*="betslip"]');
-                if (!drawer) return null;
-                const m = (drawer.innerText || '').match(/[A-Z]{3}\\s*-\\s*[A-Z]{3}/);
-                return m ? m[0].replace(/\\s+/g, ' ') : null;
+                return drawer ? (drawer.innerText || '') : '';
             }""")
-            if slip_match and legs:
-                exp_match = legs[0].get("match_name", "")
-                if exp_match and slip_match != exp_match:
-                    print(f"[!] REJECTED: Slip match {slip_match} != expected {exp_match}. Aborting bet.")
+            for leg in legs:
+                exp_match = leg.get("match_name", "")
+                if exp_match and exp_match not in drawer_text:
+                    print(f"[!] REJECTED: Slip missing expected leg {exp_match}. Aborting bet.")
                     self.last_failure_reason = "MATCH_MISMATCH"
                     self.capture_diagnostic("match_mismatch_rejected")
                     self.clear_betslip_selections()
@@ -600,13 +606,36 @@ class Bettor:
         target_url = f"https://sports-exchange.internal/en-ng/virtuals/scheduled/leagues/{slug}"
         # 1. Attempt in-page SPA carousel click to preserve betslip selections across leagues
         try:
-            league_btn = self.page.locator(f"a[href*='{slug}'], button:has-text('{slug}')").first
-            if league_btn.count() > 0 and league_btn.is_visible(timeout=800):
-                human_tap(league_btn, self.page)
-                self.page.wait_for_timeout(random.randint(1000, 1500))
-                clean_page(self.page)
-                if slug in self.page.url:
-                    return True
+            self.page.evaluate("window.scrollTo(0, 0)")
+            self.page.wait_for_timeout(250)
+            league_selectors = [
+                f"a[data-testid='league-switcher-tab-{slug}']",
+                f"[data-testid*='league-switcher-tab-{slug}']",
+                f"a[href*='{slug}']",
+                f"button:has-text('{slug}')",
+                f"a:has-text('{slug}')",
+                f"[data-testid*='{slug}']"
+            ]
+            from engine.config import LEAGUES
+            league_name = LEAGUES.get(league_key, {}).get("name", "").split(" (")[0]
+            if league_name:
+                league_selectors.append(f"button:has-text('{league_name}')")
+                league_selectors.append(f"a:has-text('{league_name}')")
+                league_selectors.append(f"p:has-text('{league_name}')")
+
+            for sel in league_selectors:
+                el = self.page.locator(sel).first
+                if el.count() > 0:
+                    try:
+                        el.scroll_into_view_if_needed(timeout=1000)
+                    except Exception:
+                        pass
+                    if el.is_visible(timeout=800):
+                        human_tap(el, self.page)
+                        self.page.wait_for_timeout(random.randint(900, 1400))
+                        clean_page(self.page)
+                        if slug in self.page.url:
+                            return True
         except Exception:
             pass
 
@@ -615,7 +644,10 @@ class Bettor:
             try:
                 self.page.goto(target_url, wait_until="commit", timeout=25000)
                 self.page.wait_for_timeout(random.randint(1500, 2200))
-                self.page.locator("button:has-text('Week ')").first.wait_for(state="visible", timeout=12000)
+                try:
+                    self.page.locator("button:has-text('Week ')").first.wait_for(state="visible", timeout=12000)
+                except Exception:
+                    pass
                 clean_page(self.page)
                 if slug in self.page.url:
                     return True
