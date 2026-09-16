@@ -108,6 +108,8 @@ The system relies strictly on quantitative capital controls:
 7. **Settled Bets Endpoint:**
    Settled bets can be retrieved via HTTP from:
    `/en-ng/my-bets/virtuals/settled?_data=routes%2F%28%24locale%29.my-bets.virtuals.%24betsType`
+8. **Virtual Odds Do NOT Drift / Shift Dynamically:**
+   Virtual football odds are static algorithmic constants determined by the RNG model per matchup—they do not float or drift like real sports markets. If the pre-click odds check detects a mismatch, it is purely a **UI Market Tab Lag** (e.g. the SPA has not finished switching from `1X2` to `Double Chance`). The engine self-heals by re-asserting the round and market tabs.
 
 ---
 

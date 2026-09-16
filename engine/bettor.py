@@ -758,7 +758,7 @@ class Bettor:
                 try:
                     btn_val = float(btn.inner_text().strip().replace(",", ""))
                     if abs(btn_val - expected_odds) > 0.05:
-                        print(f"[*] Odds shifted for {match_name}: live={btn_val} vs expected={expected_odds}")
+                        print(f"[*] UI Tab Mismatch for {match_name}: button shows {btn_val} vs expected {expected_odds} (market tab lag)")
                         return False
                 except Exception:
                     pass
