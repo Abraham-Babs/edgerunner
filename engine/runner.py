@@ -34,9 +34,12 @@ sys.stdout.reconfigure(encoding='utf-8')
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, ROOT)
 
+from urllib.parse import urlparse
 from engine.config import (
-    LEAGUES, USER_DATA_DIR, ITEL_USER_AGENT,
-    MAX_ACTIVE_PENDING_BETS, MAX_CONSECUTIVE_FAILURES
+    LEAGUES, USER_DATA_DIR, DEFAULT_USER_AGENT,
+    EXCHANGE_BASE_URL, CURRENCY_SYMBOL,
+    MAX_ACTIVE_PENDING_BETS, MAX_CONSECUTIVE_FAILURES,
+    BLOCKED_NETWORK_PATTERNS, DOM_SELECTORS
 )
 from engine.edge_matcher import EdgeMatcher
 from engine.ticket_builder import TicketBuilder
@@ -202,8 +205,8 @@ def attach_wallet_listener(page):
         url = response.url
         if any(term in url.lower() for term in ["/wallet", "users/me/wallet", "/balance"]):
             try:
-                if "sports-exchange.internal" in url:
-                    from urllib.parse import urlparse
+                domain = urlparse(EXCHANGE_BASE_URL).netloc
+                if domain and domain in url:
                     parsed = urlparse(url)
                     new_path = parsed.path + (("?" + parsed.query) if parsed.query else "")
                     if new_path and new_path != _wallet_api_url:
@@ -265,13 +268,14 @@ def get_live_balance(page, retries: int = 3) -> float:
 
 def safe_navigate_or_reload(page, url: str, bettor: Bettor = None, max_retries: int = 3, timeout_ms: int = 35000) -> bool:
     """
-    Resilient navigation designed for high-latency / jittery networks.
-    Ensures the page has actually landed on sports-exchange.internal and hydrated required interactive elements.
+    Resilient navigation designed for variable latency networks.
+    Ensures the page has actually landed and hydrated required interactive elements.
     """
+    domain = urlparse(EXCHANGE_BASE_URL).netloc
     for attempt in range(1, max_retries + 1):
         try:
             page.goto(url, wait_until="domcontentloaded", timeout=timeout_ms)
-            if page.url and not page.url.startswith("about:") and "sports-exchange.internal" in page.url:
+            if page.url and not page.url.startswith("about:") and (not domain or domain in page.url):
                 try:
                     page.locator('[data-testid="match-odd"], button:has-text("Week ")').first.wait_for(state="visible", timeout=20000)
                 except Exception:
@@ -286,7 +290,7 @@ def safe_navigate_or_reload(page, url: str, bettor: Bettor = None, max_retries: 
                 time.sleep(backoff)
                 try:
                     page.goto(url, wait_until="domcontentloaded", timeout=timeout_ms)
-                    if page.url and not page.url.startswith("about:") and "sports-exchange.internal" in page.url:
+                    if page.url and not page.url.startswith("about:") and (not domain or domain in page.url):
                         clean_page(page)
                         return True
                 except Exception as re_err:
@@ -473,7 +477,7 @@ def execute_master_board_bets(page, matcher: EdgeMatcher, builder: TicketBuilder
 
 def run_loop(profile: str = "ultra_conservative", dry_run: bool = False, max_rounds: int = 0):
     print("==================================================")
-    print(f"[*] STARTING EXCHANGE VALUE BETTING ENGINE (MASTER BOARD)")
+    print(f"[*] STARTING QUANTITATIVE VALUE EXECUTION ENGINE (MASTER BOARD)")
     print(f"[*] Profile: {profile.upper()} | Dry Run: {dry_run}")
     print(f"[*] Architecture: Unified Rolling Master Board (Cross-League & Cross-Week)")
     print("==================================================")
@@ -492,22 +496,15 @@ def run_loop(profile: str = "ultra_conservative", dry_run: bool = False, max_rou
             device_scale_factor=2.0,
             is_mobile=True,
             has_touch=True,
-            user_agent=ITEL_USER_AGENT,
+            user_agent=DEFAULT_USER_AGENT,
             locale="en-NG",
             timezone_id="Africa/Lagos",
             args=["--disable-blink-features=AutomationControlled"]
         )
         page = context.pages[0] if context.pages else context.new_page()
-        # Permanently block promotional popups, game modals, iframes, and trackers at network level
-        page.route("**/*free2play*", lambda r: r.abort())
-        page.route("**/*premier-game*", lambda r: r.abort())
-        page.route("**/*exchange-core-account.workers.dev*", lambda r: r.abort())
-        page.route("**/*google*analytics*", lambda r: r.abort())
-        page.route("**/*doubleclick*", lambda r: r.abort())
-        page.route("**/*facebook*", lambda r: r.abort())
-        page.route("**/*bing*", lambda r: r.abort())
-        page.route("**/*t.co*", lambda r: r.abort())
-        page.route("**/*px.oa.opera.com*", lambda r: r.abort())
+        # Block third-party tracking pixels and non-essential endpoints at network level
+        for pattern in BLOCKED_NETWORK_PATTERNS:
+            page.route(f"**/{pattern}", lambda r: r.abort())
         bettor = Bettor(page)
         attach_wallet_listener(page)
 
@@ -518,7 +515,7 @@ def run_loop(profile: str = "ultra_conservative", dry_run: bool = False, max_rou
             print("[!] HARD EXIT: Initial login verification failed. Check credentials in .env.")
             sys.exit(1)
 
-        print("[*] Contacting SportsExchange wallet server for verified bankroll...")
+        print("[*] Contacting exchange wallet server for verified bankroll...")
         init_balance = 0.0
         for b_attempt in range(10):
             init_balance = get_live_balance(page)
@@ -531,7 +528,7 @@ def run_loop(profile: str = "ultra_conservative", dry_run: bool = False, max_rou
             sys.exit(1)
 
         risk = RiskManager(initial_balance=init_balance)
-        print(f"[+] Initialized Risk Manager with Verified Starting Bankroll: ₦{init_balance:,.2f}")
+        print(f"[+] Initialized Risk Manager with Verified Starting Bankroll: {CURRENCY_SYMBOL}{init_balance:,.2f}")
         bettor.reconcile_settled_bets()
 
         rounds_completed = 0
@@ -606,7 +603,7 @@ def run_loop(profile: str = "ultra_conservative", dry_run: bool = False, max_rou
             context.close()
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="SportsExchange Autonomous Betting Engine")
+    parser = argparse.ArgumentParser(description="Autonomous Value Trading & Execution Engine")
     parser.add_argument("--profile", default="ultra_conservative", choices=["ultra_conservative", "conservative", "balanced", "expansive"], help="Statistical edge profile")
     parser.add_argument("--dry-run", action="store_true", help="Simulate bet construction without placing real bets")
     parser.add_argument("--max-rounds", type=int, default=0, help="Stop after N full 4-league cycles (0 for continuous)")

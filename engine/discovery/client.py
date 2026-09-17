@@ -2,13 +2,13 @@
 engine/discovery/client.py
 --------------------------
 High-performance, strictly stateless unauthenticated HTTP discovery client
-for SportsExchange scheduled virtual football.
+for scheduled virtual sports execution.
 
 Transport Architecture:
 1. Primary Transport: HTTP/2 with modern mobile Chrome headers (Sec-CH-UA, Sec-Fetch)
    enabling true multiplexing over a single persistent connection.
 2. Fallback Transport: HTTP/1.1 with keep-alive connection pooling if H2 drops or resets.
-3. Resilient against variable network latency (e.g. Nigerian ISPs).
+3. Resilient against variable network latency.
 4. Selective Area fetching: Area 2 (O/U 1.5, 3.5, 4.5) only queried when active
    matches have confirmed edges.
 5. Server clock skew synchronization for millisecond-accurate kickoff epochs.
@@ -22,20 +22,20 @@ from typing import Dict, List, Any, Optional
 
 import httpx
 
-from engine.config import LEAGUES
+from engine.config import LEAGUES, EXCHANGE_BASE_URL, EXCHANGE_API_BASE
 from engine.discovery.market_mapping import (
     map_selection_to_outcome,
     OUTCOME_TO_UI_METADATA,
 )
 
-BASE_URL = "https://sports-exchange.internal/en-ng/virtuals/api"
+BASE_URL = EXCHANGE_API_BASE
 
-NIGERIAN_MOBILE_USER_AGENTS = [
-    "Mozilla/5.0 (Linux; Android 15; itel A6611L Build/AP3A.240905.015.A2; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/131.0.6778.200 Mobile Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 13; TECNO KI7 Build/TP1A.220624.014) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.6613.14 Mobile Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 13; Infinix X669 Build/TP1A.220624.014) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.6478.122 Mobile Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 14; SM-A145F Build/UP1A.231005.007) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.6723.102 Mobile Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 13; 22120RN86G Build/TP1A.220624.014) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.6533.103 Mobile Safari/537.36"
+MOBILE_USER_AGENTS = [
+    "Mozilla/5.0 (Linux; Android 15; Mobile Device Build/AP3A.240905.015.A2; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/131.0.6778.200 Mobile Safari/537.36",
+    "Mozilla/5.0 (Linux; Android 13; Mobile Device Build/TP1A.220624.014) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.6613.14 Mobile Safari/537.36",
+    "Mozilla/5.0 (Linux; Android 13; Mobile Device Build/TP1A.220624.014) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.6478.122 Mobile Safari/537.36",
+    "Mozilla/5.0 (Linux; Android 14; Mobile Device Build/UP1A.231005.007) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.6723.102 Mobile Safari/537.36",
+    "Mozilla/5.0 (Linux; Android 13; Mobile Device Build/TP1A.220624.014) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.6533.103 Mobile Safari/537.36"
 ]
 
 LEAGUE_SLUG_MAP = {
@@ -81,9 +81,9 @@ class PublicDiscoveryClient:
     def _get_headers(self) -> Dict[str, str]:
         return {
             "Accept": "application/json, text/plain, */*",
-            "Origin": "https://sports-exchange.internal",
-            "Referer": "https://sports-exchange.internal/en-ng/virtuals",
-            "User-Agent": random.choice(NIGERIAN_MOBILE_USER_AGENTS),
+            "Origin": EXCHANGE_BASE_URL,
+            "Referer": f"{EXCHANGE_BASE_URL}/virtuals",
+            "User-Agent": random.choice(MOBILE_USER_AGENTS),
             "Sec-Ch-Ua": '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
             "Sec-Ch-Ua-Mobile": "?1",
             "Sec-Ch-Ua-Platform": '"Android"',

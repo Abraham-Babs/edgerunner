@@ -2,7 +2,7 @@
 engine/pipeline/edge_compiler.py
 --------------------------------
 Full dynamic pipeline that ingests:
-1. Updated historical match outcomes (from parquets/cat_*.parquet)
+1. Updated historical match outcomes (from parquets/league_*.parquet)
 2. Fresh bookmaker odds (from h2h_odds.json)
 3. Fits empirical hit rates (mu_phat) and model bin edges (geom_fit_17, geom_fit_27)
 4. Exports an updated analysis/results/confirmed_edges.csv

@@ -14,8 +14,14 @@ def _load_env():
 
 _load_env()
 
+# Exchange Platform Credentials
 EXCHANGE_USERNAME = os.environ.get("EXCHANGE_USERNAME", "")
 EXCHANGE_PASSWORD = os.environ.get("EXCHANGE_PASSWORD", "")
+EXCHANGE_BASE_URL = os.environ.get("EXCHANGE_BASE_URL", "https://sports-exchange.internal")
+EXCHANGE_API_BASE = os.environ.get("EXCHANGE_API_BASE", f"{EXCHANGE_BASE_URL}/api")
+EXCHANGE_DISPATCH_URL = os.environ.get("EXCHANGE_DISPATCH_URL", f"{EXCHANGE_BASE_URL}/virtuals/scheduled?_data=routes%2F%24locale.virtuals.scheduled")
+EXCHANGE_SETTLED_URL = os.environ.get("EXCHANGE_SETTLED_URL", f"{EXCHANGE_BASE_URL}/my-bets/virtuals/settled?_data=routes%2F%28%24locale%29.my-bets.virtuals.%24betsType")
+CURRENCY_SYMBOL = os.environ.get("CURRENCY_SYMBOL", "₦")
 
 SHOTS_DIR = os.path.join(ROOT_DIR, "screenshots")
 os.makedirs(SHOTS_DIR, exist_ok=True)
@@ -28,8 +34,8 @@ LOOKUP_DIR = os.path.join(ROOT_DIR, "lookup")
 RESULTS_DIR = os.path.join(ROOT_DIR, "analysis", "results")
 BET_LOG_FILE = os.path.join(RESULTS_DIR, "bet_log.csv")
 
-ITEL_USER_AGENT = (
-    "Mozilla/5.0 (Linux; Android 15; itel A6611L Build/AP3A.240905.015.A2; wv) "
+DEFAULT_USER_AGENT = (
+    "Mozilla/5.0 (Linux; Android 15; Mobile Device Build/AP3A.240905.015.A2; wv) "
     "AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 "
     "Chrome/131.0.6778.200 Mobile Safari/537.36"
 )
@@ -37,35 +43,35 @@ ITEL_USER_AGENT = (
 # League configurations
 LEAGUES = {
     "league_en": {
-        "name": "Premier League (England)",
+        "name": "Virtual Premier League (England)",
         "teams": 20,
         "matches_per_round": 10,
         "round_cycle_sec": 180,
-        "url": "https://sports-exchange.internal/en-ng/virtuals/scheduled/leagues/premier-league",
+        "url": f"{EXCHANGE_BASE_URL}/leagues/premier-league",
         "lookup": "matchup_lambdas_league_en.parquet"
     },
     "league_es": {
-        "name": "Primera Liga (Spain)",
+        "name": "Virtual Primera Liga (Spain)",
         "teams": 20,
         "matches_per_round": 10,
         "round_cycle_sec": 180,
-        "url": "https://sports-exchange.internal/en-ng/virtuals/scheduled/leagues/primera-liga",
+        "url": f"{EXCHANGE_BASE_URL}/leagues/primera-liga",
         "lookup": "matchup_lambdas_league_es.parquet"
     },
     "league_it": {
-        "name": "Serie League (Italy)",
+        "name": "Virtual Serie League (Italy)",
         "teams": 20,
         "matches_per_round": 10,
         "round_cycle_sec": 180,
-        "url": "https://sports-exchange.internal/en-ng/virtuals/scheduled/leagues/serie-league",
+        "url": f"{EXCHANGE_BASE_URL}/leagues/serie-league",
         "lookup": "matchup_lambdas_league_it.parquet"
     },
     "league_de": {
-        "name": "Bundes League (Germany)",
+        "name": "Virtual Bundes League (Germany)",
         "teams": 18,
         "matches_per_round": 9,
         "round_cycle_sec": 90,
-        "url": "https://sports-exchange.internal/en-ng/virtuals/scheduled/leagues/bundes-league",
+        "url": f"{EXCHANGE_BASE_URL}/leagues/bundes-league",
         "lookup": "matchup_lambdas_league_de.parquet"
     }
 }
@@ -161,6 +167,27 @@ HUMAN_STAKE_STEPS = [
 MAX_ACTIVE_PENDING_BETS = 10   # Maximum concurrent in-play bets across all leagues
 MAX_CONSECUTIVE_FAILURES = 3   # Alert if 3 bet attempts fail consecutively
 
+# Generic DOM Selectors & Platform UI Mappings
+DOM_SELECTORS = {
+    "betslip_drawer": "[data-testid*='betslip'], div[class*='betslip-drawer']",
+    "betslip_close": "button[data-testid*='close-icon'], button[aria-label*='close' i], [data-testid*='betslip-header'] button",
+    "betslip_stake_input": "[data-testid*='stake'], input[name*='stake'], input[type='number']",
+    "betslip_place_bet": "button[data-testid*='place-bet'], button[data-testid*='action-place'], button:has-text('Place Bet')",
+    "user_balance": "[data-testid*='balance'], [class*='balance'], [id*='balance']",
+    "login_username": "[data-testid*='username'], input[name='username'], input[type='tel']",
+    "login_password": "[data-testid*='password'], input[name='password'], input[type='password']",
+    "login_submit": "button[data-testid*='login-submit'], button[data-testid*='highlight'], button:has-text('LOGIN')",
+    "odds_button": "[data-testid*='odd'], button[class*='odd'], div[class*='odd']",
+}
 
-
-
+# Network Resource Optimization Patterns
+BLOCKED_NETWORK_PATTERNS = [
+    "*google-analytics*",
+    "*doubleclick*",
+    "*facebook*",
+    "*bing*",
+    "*t.co*",
+    "*adservice*",
+    "*tracking*",
+    "*telemetry*",
+]

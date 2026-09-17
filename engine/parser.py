@@ -1,7 +1,7 @@
 """
 engine/parser.py
 ----------------
-Reads the live state of the SportsExchange league page directly from the browser DOM.
+Reads the live state of the exchange league page directly from the browser DOM.
 
 Three main jobs:
   1. Clean-up: Removes promotional iframes, pop-up dialogs, and blocking overlays
@@ -25,31 +25,37 @@ from typing import Dict, List, Any, Optional, Set
 import random
 CLEANUP_SCRIPT = """
 () => {
-    // 1. Remove free2play iframe, astro preloader, and promo wrappers
-    document.querySelectorAll('astro-island[component-export="Preloader"], div[class*="z-[99999999]"], div[class*="tw-z-[99999999]"], iframe[title="Free to Play"]').forEach(el => el.remove());
-    document.querySelectorAll('iframe').forEach(f => {
-        if (f.src.includes('free2play') || f.src.includes('premier-game') || f.src.includes('exchange-core-account')) {
+    // 1. Dismiss blocking full-screen preloaders and high-z-index overlays
+    document.querySelectorAll('[class*="preloader"], [class*="overlay"][class*="blocking"], div[class*="z-[99999999]"], div[class*="tw-z-[99999999]"]').forEach(el => el.remove());
+
+    // 2. Remove non-essential promotional iframes
+    document.querySelectorAll('iframe:not([id*="main"])').forEach(f => {
+        const src = (f.src || '').toLowerCase();
+        if (src && !src.startsWith(window.location.origin) && !src.startsWith('about:blank')) {
             f.remove();
         }
     });
-    // 2. Remove promo dialogs, penalty shootout / free to play modals, and backdrops
-    document.querySelectorAll('div.dialog__paper, div.dialog__backdrop, div, section').forEach(el => {
-        const txt = el.innerText || '';
-        if (txt.includes('Welcome to Daily Free to Play') || txt.includes('PENALTY SHOOTOUT') || txt.includes('DAILY REWARDS FOR FREE') || txt.includes('Welcome back!')) {
-            el.remove();
-        }
+
+    // 3. Dismiss blocking dialog backdrops and modal overlays
+    document.querySelectorAll('[aria-modal="true"], dialog, [role="dialog"], [class*="dialog__backdrop"], [class*="dialog__paper"]').forEach(el => {
+        el.remove();
     });
-    // Click any modal close button if present
-    document.querySelectorAll('button, div, span').forEach(el => {
-        const aria = el.getAttribute('aria-label') || '';
-        const cls = el.className || '';
-        const txt = (el.innerText || '').trim();
-        if (aria.toLowerCase().includes('close') || cls.toString().toLowerCase().includes('close') || txt === 'Close' || txt === '✕' || txt === '×') {
+
+    // 4. Click any active dismiss or close button
+    document.querySelectorAll('button, div[role="button"], span[role="button"]').forEach(el => {
+        const aria = (el.getAttribute('aria-label') || '').toLowerCase();
+        const cls = (el.className || '').toString().toLowerCase();
+        const txt = (el.innerText || '').trim().toLowerCase();
+        if (aria.includes('close') || aria.includes('dismiss') || cls.includes('close-btn') || txt === 'close' || txt === '✕' || txt === '×') {
             try { el.click(); } catch(e) {}
         }
     });
-    // 3. Auto-recover from temporary SportsExchange data reload overlay
-    const refreshBtn = Array.from(document.querySelectorAll('button')).find(b => (b.innerText || '').includes('REFRESH PAGE'));
+
+    // 5. Auto-recover from temporary data reload prompt
+    const refreshBtn = Array.from(document.querySelectorAll('button')).find(b => {
+        const t = (b.innerText || '').trim().toLowerCase();
+        return t.includes('refresh') || t.includes('reload');
+    });
     if (refreshBtn) {
         refreshBtn.click();
     }

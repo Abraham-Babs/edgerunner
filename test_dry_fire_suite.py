@@ -16,13 +16,13 @@ sys.stdout.reconfigure(encoding='utf-8')
 ROOT = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, ROOT)
 
-from engine.config import USER_DATA_DIR, ITEL_USER_AGENT, LEAGUES
+from engine.config import USER_DATA_DIR, DEFAULT_USER_AGENT, LEAGUES
 from engine.bettor import Bettor
 from engine.parser import clean_page, extract_all_markets
 
 def run_dry_fire_suite():
     print("==================================================")
-    print("[*] STARTING EXCHANGE DRY-FIRE TEST SUITE")
+    print("[*] STARTING DRY-FIRE TEST SUITE")
     print("[*] ZERO REAL MONEY AT RISK (Submissions Intercepted)")
     print("==================================================")
 
@@ -34,9 +34,9 @@ def run_dry_fire_suite():
             device_scale_factor=2.0,
             is_mobile=True,
             has_touch=True,
-            user_agent=ITEL_USER_AGENT,
-            locale="en-NG",
-            timezone_id="Africa/Lagos",
+            user_agent=DEFAULT_USER_AGENT,
+            locale="en-US",
+            timezone_id="UTC",
             args=["--disable-blink-features=AutomationControlled"]
         )
         page = context.pages[0] if context.pages else context.new_page()

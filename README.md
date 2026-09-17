@@ -1,104 +1,106 @@
-# SportsExchange Virtual Leagues — Autonomous Value Betting Engine
+# Autonomous Quantitative Execution & Value Trading Engine
 
-An autonomous betting system that identifies and exploits statistical edges in SportsExchange's virtual football leagues. It runs continuously, cycles through four leagues, reads live odds directly off the screen, cross-checks them against a walk-forward validated edge model, and places only bets where the numbers are genuinely in our favour.
-
-> **⚠️ LLM Collaborators: ALWAYS use `git` before and after making changes. Branch, commit, and never force-push to main. Read the actual code — not just docs or comments — before modifying anything.**
+An institutional-grade algorithmic sports trading system designed for low-latency market discovery, statistical edge exploitation, dynamic Earliest Deadline First (EDF) order execution, and non-ergodic portfolio risk management.
 
 ---
 
-## How It Works
+## System Architecture
 
-### 1. Edge Pipeline (Offline)
-Historical match data for each league is processed through a multi-stage pipeline:
+The engine implements a decoupled two-tier architecture separating high-speed market discovery from deterministic session order dispatch:
 
-1. **Edge Compiler** (`engine/pipeline/edge_compiler.py`): Fits empirical hit rates against bookmaker odds across all matchups/outcomes. Minimum sample size: **100 observations** (`MIN_HITS`).
-2. **Walk-Forward Validator** (`engine/pipeline/walkforward.py`): Splits data chronologically 70/30. Edges must demonstrate positive OOS ROI with `oos_t_stat >= 2.0` to be confirmed. This prevents in-sample overfitting from reaching production.
-3. **Output**: `analysis/results/confirmed_edges.csv` — each row carries `min_edge`, `oos_roi`, `oos_t_stat`, and `n_train` metadata.
-
-### 2. High-Speed HTTP/2 Discovery
-Instead of slow, fragile browser page scraping across 4 leagues, the engine polls SportsExchange's raw virtuals endpoints concurrently via unauthenticated HTTP/2 in ~1.5 seconds (`engine/discovery/client.py`). It syncs server clock skew and continuously updates the active candidate pool, immediately evicting concluded rounds.
-
-### 3. Per-League Odds Bands
-Each league has independently calibrated `min_odds` / `max_odds` in `config.py`, derived from odds-band sweeps (`engine/pipeline/band_sweep.py`). This excludes negative-EV zones that differ by league.
-
-### 4. Conviction Tiers & OOS-Scaled Kelly Sizing
-Qualifying selections are graded into tiers based on **edge magnitude and odds only** (no win-rate filter):
-
-| Tier | Name | Edge | Max Odds | Stake Sizing |
-|------|------|------|----------|--------------|
-| 1 | Anchor | ≥ 6% | ≤ 2.40 | 4.0% → 5.5% of bankroll, scaled by edge |
-| 2 | Value | ≥ 5% | ≤ 3.20 | 2.5% → 3.5% of bankroll, scaled by edge |
-| 3 | Speculative | Any confirmed | > 3.20 | 2.0% flat |
-| Double | Smart Double | Combined | ≤ 3.00 | 2.5% → 3.5% |
-| Treble | Micro-Treble | Cross-league | ≤ 4.20 | ₦10 platform minimum |
-
-**Confidence Scaling**: All stakes are multiplied by `min(1.0, n_train / 300)`, down-weighting edges with thin sample sizes.
-
-**OOS Edge Sizing**: Kelly fraction uses the out-of-sample edge (`oos_edge`), not the in-sample `min_edge`, for stake calculation.
-
-Stakes snap to human increments (`₦10, ₦15, ₦20 ... ₦500`).
-
-### 5. Unified Rolling Master Board
-The engine maintains an in-memory sliding window across all 4 leagues:
-- Retains active rounds (Weeks 1–4), only scraping newly unlocked rounds.
-- Cross-league doubles combine independent selections from different leagues.
-- Micro-trebles combine 3 anchor legs across 3 distinct leagues.
-- Candidates sorted by **Tier → Edge descending**.
-
-### 6. Two-Layer Execution & Adaptive EDF Scheduler
-- **Earliest Deadline First (EDF) Scheduling**: Sorts tickets strictly by kickoff urgency ($D_1 \le D_2 \dots$).
-- **Adaptive Equal-Slack Pacing**: Distributes available idle time evenly across bets (10s–25s target) with natural human fast-follow bursts (5.0s–7.5s).
-- **Surplus Ticket Preservation**: Tickets exceeding the concurrent risk cap are retained on the MasterBoard across cycles rather than discarded.
-- **Layer 1 (Camouflage Decoy)**: Generates human interaction telemetry ahead of submission (bypassed if $<4.0$s to kickoff).
-- **Layer 2 (In-Session API Dispatch)**: Deterministic, sub-second submission via authenticated browser fetch directly to SportsExchange's scheduled virtuals endpoint.
-- **Post-Submission State Purge**: Programmatically clears betslip localStorage keys and drawer state to keep DOM pristine.
-
-### 7. Risk Management (Pure Mathematical Model)
-True Equity = `Live Cash + In-Play Stakes`.
-In an independent RNG process (i.i.d.), each round is memoryless. The system relies strictly on capital preservation:
-
-| Equity | Mode | Max Tickets/Cycle | Notes |
-|--------|------|-------------------|-------|
-| < ₦1,200 | BEDROCK_SHIELD | 2 | No trebles, max 4 concurrent bets, ~85% bankroll protected in cash |
-| ₦1,200 – ₦5,999 | CORE_GROWTH | 2 | No trebles, max 4 concurrent bets |
-| ≥ ₦6,000 | EXPANSION_RATCHET | 3 | Trebles + satellite plays enabled |
-
-- **Fractional Staking**: Sized at 3%–4% per bet, capping total live exposure to ~15% of bankroll.
-- **Hard Floor**: Automatic immediate shutdown if equity drops below ₦100 or 50% of initial deposit.
-- **No Gambler's Fallacy**: Zero artificial streak cool-offs or profit breathers that interrupt positive-EV compounding.
-- **Match-Level Dedup**: Exposure keyed by `"{league} | {match_name}"` — no duplicate exposure.
-
-### 8. Automated Settlement Logging
-Bet outcomes are logged to `analysis/results/bet_log.csv` with `bet_id`, `outcome` (`WON`/`LOST`), `returned_amount`, and `receipt_file` (coupon code). The engine queries SportsExchange's `/my-bets/virtuals/settled` endpoint via in-session API at startup and cycle boundaries to automatically reconcile outcomes without interrupting the live board.
-
----
-
-## Running the Engine
-
-```bash
-# Live autonomous engine
-.venv\Scripts\python -u -m engine.runner --profile ultra_conservative
-
-# Dry-run (stages live odds, verifies betslip & stake, zero real money)
-.venv\Scripts\python -u -m engine.runner --profile ultra_conservative --dry-run
-
-# Limit to N cycles
-.venv\Scripts\python -u -m engine.runner --profile ultra_conservative --dry-run --max-rounds 5
+```
+┌─────────────────────────────────────────────────────────────┐
+│ 1. HIGH-SPEED HTTP/2 DISCOVERY (engine/discovery/client.py) │
+│    - Concurrent market polling across leagues in ~1.5s       │
+│    - Server clock skew synchronization via HTTP Date header │
+│    - Dynamic odds validation against bivariate Poisson model│
+│    - Caches qualified +EV edges into MasterBoard memory pool│
+└──────────────────────────────┬──────────────────────────────┘
+                               │ (Triggered when qualified edges exist)
+┌──────────────────────────────▼──────────────────────────────┐
+│ 2. TWO-LAYER ADAPTIVE DISPATCH (engine/bettor.py)           │
+│    - Layer 1: Human interaction telemetry & spatial jitter  │
+│    - Layer 2: In-session authenticated API dispatch (<100ms)│
+│    - Post-Dispatch: Programmatic DOM & storage state purge  │
+│    - Reconciliation: In-session settled order reconciliation│
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Project Structure
+## Core Engineering Highlights
+
+### 1. Offline Quantitative Pipeline & Walk-Forward Validation
+To eliminate in-sample backtest overfitting:
+* **Edge Compiler** (`engine/pipeline/edge_compiler.py`): Estimates empirical probability distributions across matchup parameter spaces ($N \ge 100$).
+* **Walk-Forward Validator** (`engine/pipeline/walkforward.py`): Performs chronological 70/30 train/test splits. Edges are rejected unless out-of-sample ROI demonstrates statistical significance with student's $t \ge 2.0$.
+* **Poisson Lambda Fitting**: Real-time cross-checking of 1X2, Double Chance, and Totals against bivariate Poisson distributions.
+
+### 2. Low-Latency HTTP/2 Market Discovery
+* Utilizes multiplexed HTTP/2 streams over persistent TLS connections to poll multi-league candidate pools in sub-2 seconds.
+* Implements millisecond-level server clock skew synchronization (`sync_clock_skew`) to ensure deterministic countdowns to market close.
+
+### 3. Conviction Tiers & Out-of-Sample Kelly Sizing
+Positions are sized dynamically using out-of-sample edge calibration:
+* **Tier 1 (Anchor)**: Edge $\ge 6\%$, Odds $\le 2.40$ $\rightarrow$ Base stake 4.0%–5.5% of bankroll.
+* **Tier 2 (Value)**: Edge $\ge 5\%$, Odds $\le 3.20$ $\rightarrow$ Base stake 2.5%–3.5% of bankroll.
+* **Tier 3 (Speculative)**: Any confirmed edge $\rightarrow$ 2.0% flat.
+* **Sample Size Attenuation**: Kelly fraction is dampened by sample density: $\text{scale} = \min(1.0, N_{\text{train}} / 300)$.
+
+### 4. Earliest Deadline First (EDF) Adaptive Execution
+* **Deadline Priority**: Sorts pending orders by event kickoff urgency ($D_1 \le D_2 \dots$).
+* **Equal-Slack Pacing**: Calculates available slack before event lock and distributes spacing evenly (10s–25s target with fast-follow bursts).
+* **Surplus Preservation**: Retains excess positive-EV candidates across execution cycles without dropping valid edges.
+
+### 5. Quantitative Capital Shields & Risk Controls
+Virtual sports markets are memoryless i.i.d. stochastic processes. The engine rejects gamblers' fallacy heuristics in favor of strict capital preservation:
+
+| Equity Tier | Mode | Max Orders/Cycle | Exposure Limits |
+|---|---|---|---|
+| `< 1,200 units` | **BEDROCK_SHIELD** | 2 | Max 4 active orders (~15% bankroll, ~85% liquid cash shield) |
+| `1,200 – 5,999 units` | **CORE_GROWTH** | 2 | Max 4 active orders |
+| `≥ 6,000 units` | **EXPANSION_RATCHET**| 3 | Max 10 active orders |
+
+* **Match Deduplication**: Guarantees zero conflicting or correlated exposure on the same event.
+* **Hard Stop-Loss Floor**: Immediate automated termination if true equity drops below 50% of starting capital.
+
+---
+
+## Repository Structure
 
 ```
 engine/
-  runner.py              — Orchestrator. Main loop, risk management, portfolio modes.
-  master_board.py        — In-memory sliding window cache for all leagues/rounds.
-  ticket_builder.py      — Assembles singles, doubles, trebles with Kelly sizing.
-  bettor.py              — Executes tickets on SportsExchange mobile UI with touch dispatch.
-  discovery/             — HTTP/2 concurrent odds discovery and clock skew sync.
-  parser.py              — DOM cleanup, preloader removal, tab selection.
-  edge_matcher.py        — Loads confirmed edges, validates live odds against them.
-  human_interaction.py   — Spatial jitter, natural pauses, mobile touch simulation.
-  config.py              — Profiles, per-league odds bands, capital thresholds.
+  runner.py              — Execution orchestrator, event loop, and capital risk controls.
+  master_board.py        — In-memory rolling window cache across leagues and rounds.
+  ticket_builder.py      — Multi-leg ticket assembler with fractional Kelly sizing.
+  bettor.py              — Order execution engine, session API dispatch, and UI driver.
+  discovery/             — High-concurrency HTTP/2 market polling & clock skew sync.
+  parser.py              — DOM parser, overlay purger, and fixture extractor.
+  edge_matcher.py        — Live odds validation against pre-compiled edge tables.
+  human_interaction.py   — Natural Bezier interaction curves and timing jitter.
+  config.py              — League parameters, odds bands, and exchange endpoints.
+analysis/
+  results/               — Confirmed edges, walk-forward stats, and order logs.
+```
+
+---
+
+## Quickstart & Verification
+
+### 1. Environment Configuration
+Copy the example environment configuration:
+```bash
+cp .env.example .env
+```
+
+### 2. Dry-Run Simulation (0 Financial Risk)
+Verify DOM interaction, payload serialization, and odds validation without placing real orders:
+```bash
+python -m engine.runner --profile ultra_conservative --dry-run --max-rounds 1
+```
+
+### 3. Full Integration Suite
+Run the end-to-end dry-fire verification suite:
+```bash
+python test_dry_fire_suite.py
 ```

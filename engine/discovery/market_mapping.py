@@ -1,8 +1,8 @@
 """
 engine/discovery/market_mapping.py
 ----------------------------------
-Deterministic mapping from SportsExchange Virtuals sync API market IDs and selectionTypeIds
-to our engine's canonical outcome keys.
+Deterministic mapping from exchange virtual market IDs and selectionTypeIds
+to canonical outcome keys.
 """
 
 from typing import Dict, Tuple, Optional

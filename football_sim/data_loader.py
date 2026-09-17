@@ -12,7 +12,7 @@ PARQUET_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "par
 ODDS_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "h2h_odds.json"))
 
 LEAGUE_LOOKUP_FILES = {
-    "league_en": "matchup_lambdas.parquet",
+    "league_en": "matchup_lambdas_league_en.parquet",
     "league_es": "matchup_lambdas_league_es.parquet",
     "league_it": "matchup_lambdas_league_it.parquet",
     "league_de": "matchup_lambdas_league_de.parquet",

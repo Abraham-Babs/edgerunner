@@ -2,7 +2,7 @@
 engine/bettor.py
 ----------------
 The hands of the operation. Once the runner has decided what bets to place
-and at what stakes, this module physically executes them on the SportsExchange
+and at what stakes, this module physically executes them on the exchange
 mobile interface using the Playwright browser.
 
 Execution flow for each ticket:
@@ -35,7 +35,17 @@ from datetime import datetime
 from typing import Dict, Any, List, Optional
 import pandas as pd
 
-from engine.config import BET_LOG_FILE, SHOTS_DIR, EXCHANGE_USERNAME, EXCHANGE_PASSWORD
+from engine.config import (
+    BET_LOG_FILE,
+    SHOTS_DIR,
+    EXCHANGE_USERNAME,
+    EXCHANGE_PASSWORD,
+    EXCHANGE_BASE_URL,
+    EXCHANGE_DISPATCH_URL,
+    EXCHANGE_SETTLED_URL,
+    CURRENCY_SYMBOL,
+    DOM_SELECTORS,
+)
 from engine.human_interaction import human_tap, human_type, human_pause
 from engine.parser import clean_page, select_week_tab
 
@@ -136,7 +146,7 @@ class Bettor:
 
     def dispatch_session_bet(self, ticket: Dict[str, Any], dry_run: bool = False) -> Dict[str, Any]:
         """
-        Submits the ticket directly via the authenticated browser session fetch() to SportsExchange's
+        Submits the ticket directly via the authenticated browser session fetch() to the exchange's
         scheduled virtuals action endpoint: routes/$locale.virtuals.scheduled.
         Completely immune to DOM layout shifts and visual rendering lags.
         """
@@ -207,9 +217,9 @@ class Bettor:
             }
 
         try:
-            res = self.page.evaluate("""async (payload) => {
+            res = self.page.evaluate("""async ([endpoint, payload]) => {
                 try {
-                    const resp = await fetch('https://sports-exchange.internal/en-ng/virtuals/scheduled?_data=routes%2F%24locale.virtuals.scheduled', {
+                    const resp = await fetch(endpoint, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -222,7 +232,7 @@ class Bettor:
                 } catch (err) {
                     return { ok: false, error: err.toString() };
                 }
-            }""", payload)
+            }""", [EXCHANGE_DISPATCH_URL, payload])
 
             if res and res.get("ok"):
                 data = res.get("data", {}).get("data", {})
@@ -297,7 +307,7 @@ class Bettor:
         effective_budget = time_budget if time_budget is not None else 3.0
 
         # --- LAYER 1: LIGHTWEIGHT CAMOUFLAGE DECOY ---
-        # Normal path: runs before Layer 2 to establish human telemetry on SportsExchange's edge.
+        # Normal path: runs before Layer 2 to establish human telemetry on exchange edge.
         # Emergency path: if time to kickoff is critically low (<4.0s), bypass completely.
         if time_to_kickoff < 4.0:
             print(f"[!] EMERGENCY PREEMPTION: Only {time_to_kickoff:.1f}s to kickoff. Bypassing Layer 1 decoy.")
@@ -320,7 +330,7 @@ class Bettor:
                 pass
 
         # --- LAYER 2: DETERMINISTIC IN-SESSION API DISPATCH ---
-        # The bet is sent directly via the authenticated browser session fetch() to SportsExchange.
+        # The bet is sent directly via the authenticated browser session fetch() to the exchange.
         # Zero DOM button clicking, zero delay, sub-second execution.
         try:
             dispatch_res = self.dispatch_session_bet(ticket, dry_run=dry_fire)
@@ -383,8 +393,8 @@ class Bettor:
     def close_betslip(self):
         """Close/dismiss the betslip drawer or confirmation modal so the fixture board is unobstructed."""
         try:
-            # 1. Direct verified testid selector for SportsExchange's betslip header close icon
-            close_btn = self.page.locator('button[data-testid="betslip-header-title-close-icon"], [data-testid*="close-icon"]').first
+            # 1. Configured selector for betslip close icon
+            close_btn = self.page.locator(DOM_SELECTORS["betslip_close"]).first
             if close_btn.count() > 0 and close_btn.is_visible(timeout=500):
                 human_tap(close_btn, self.page)
                 self.page.wait_for_timeout(300)
@@ -553,13 +563,13 @@ class Bettor:
             "league_en": "premier-league",
             "league_es": "primera-liga",
             "league_it": "serie-league",
-            "league_de": "bundes-league"
+            "league_de": "bundes-league",
         }
         slug = league_slugs.get(str(league_key).lower(), str(league_key).lower())
         if slug in self.page.url:
             return True
 
-        target_url = f"https://sports-exchange.internal/en-ng/virtuals/scheduled/leagues/{slug}"
+        target_url = f"{EXCHANGE_BASE_URL}/virtuals/scheduled/leagues/{slug}"
         # 1. Attempt in-page SPA carousel click to preserve betslip selections across leagues
         try:
             self.page.evaluate("window.scrollTo(0, 0)")
@@ -765,12 +775,12 @@ class Bettor:
     def reconcile_settled_bets(self):
         """
         In-session API reconciliation of settled bets.
-        Queries SportsExchange's /my-bets/virtuals/settled route to match placed tickets
+        Queries exchange's settled orders route to match placed tickets
         and record exact outcome ('WON' / 'LOST') and returned_amount to bet_log.csv.
         Zero DOM interaction, non-disruptive to active betting boards.
         """
         try:
-            url = "/en-ng/my-bets/virtuals/settled?_data=routes%2F%28%24locale%29.my-bets.virtuals.%24betsType"
+            url = EXCHANGE_SETTLED_URL
             res = self.page.evaluate("""async (u) => {
                 try {
                     const r = await fetch(u, { headers: { 'Accept': 'application/json' } });
@@ -851,12 +861,12 @@ class Bettor:
                 print("[!] Notice: Logged out state detected and no credentials found in .env.")
                 return False
 
-            print("[*] Logged out state detected. Attempting automated login with phone number...")
+            print("[*] Logged out state detected. Attempting automated login...")
             human_tap(login_btn, self.page)
             self.page.wait_for_timeout(1500)
 
-            user_input = self.page.locator("[data-testid='txt-username'], input[name='username']").first
-            pass_input = self.page.locator("[data-testid='txt-password'], input[name='password']").first
+            user_input = self.page.locator(DOM_SELECTORS["login_username"]).first
+            pass_input = self.page.locator(DOM_SELECTORS["login_password"]).first
 
             if user_input.is_visible(timeout=3000) and pass_input.is_visible(timeout=3000):
                 phone = EXCHANGE_USERNAME.strip()
@@ -868,7 +878,7 @@ class Bettor:
                 human_type(pass_input, EXCHANGE_PASSWORD)
                 human_pause(0.3, 0.5)
 
-                submit = self.page.locator("button[data-testid*='highlight'], button:has-text('LOGIN'):not([data-testid*='nav'])").last
+                submit = self.page.locator(DOM_SELECTORS["login_submit"]).last
                 human_tap(submit, self.page)
                 self.page.wait_for_timeout(6000)
 
