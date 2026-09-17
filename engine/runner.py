@@ -27,6 +27,7 @@ import sys
 import time
 import random
 import argparse
+import json
 from typing import List, Dict, Any, Optional
 from playwright.sync_api import sync_playwright
 
@@ -37,7 +38,7 @@ sys.path.insert(0, ROOT)
 from urllib.parse import urlparse
 from engine.config import (
     LEAGUES, USER_DATA_DIR, DEFAULT_USER_AGENT,
-    EXCHANGE_BASE_URL, CURRENCY_SYMBOL,
+    EXCHANGE_BASE_URL, CURRENCY_SYMBOL, ODDS_FILE,
     MAX_ACTIVE_PENDING_BETS, MAX_CONSECUTIVE_FAILURES,
     BLOCKED_NETWORK_PATTERNS, DOM_SELECTORS
 )
@@ -602,11 +603,148 @@ def run_loop(profile: str = "ultra_conservative", dry_run: bool = False, max_rou
             discovery_client.close()
             context.close()
 
+def run_mock_loop(profile: str = "ultra_conservative", max_rounds: int = 0, initial_bankroll: float = 5000.0):
+    """
+    Offline Paper Trading Mode.
+    Executes 100% of the mathematical pipeline (Poisson validation, MasterBoard,
+    EDF scheduling, and capital risk controls) with simulated order fills and settlement.
+    Requires zero credentials, zero browser downloads, and zero external connectivity.
+    """
+    print("==================================================")
+    print(f"[*] STARTING MOCK PAPER-TRADING ENGINE")
+    print(f"[*] Profile: {profile.upper()} | Bankroll: {CURRENCY_SYMBOL}{initial_bankroll:,.2f}")
+    print(f"[*] Execution Mode: SIMULATED PAPER TRADING (0 Real Risk)")
+    print("==================================================")
+
+    matcher = EdgeMatcher(profile_name=profile)
+    builder = TicketBuilder()
+    master_board = MasterBoard()
+    risk = RiskManager(initial_balance=initial_bankroll)
+    current_balance = initial_bankroll
+
+    # Load offline market data
+    fixtures = {}
+    if os.path.exists(ODDS_FILE):
+        try:
+            with open(ODDS_FILE, "r", encoding="utf-8") as f:
+                fixtures = json.load(f)
+        except Exception:
+            pass
+
+    rounds_completed = 0
+    try:
+        while True:
+            rounds_completed += 1
+            now = time.time()
+            portfolio_mode = risk.get_portfolio_mode(current_balance)
+            print(f"\n>>> [MOCK CYCLE #{rounds_completed}] Refreshing candidate order books across leagues...")
+
+            # 1. Generate simulated market candidates and sync into MasterBoard
+            leagues_payload = {}
+            for l_idx, (l_key, l_cfg) in enumerate(LEAGUES.items()):
+                cycle_ko = now + 45.0 + (l_idx * 15.0)
+                week_str = "Round 1"
+                candidates = []
+                l_odds = fixtures.get(l_key, {})
+                for match_name, markets in l_odds.items():
+                    for m_name, selections in markets.items():
+                        for outcome_key, val in selections.items():
+                            if isinstance(val, dict) and val.get("raw") is not None:
+                                raw_odds = float(val["raw"])
+                                edge_info = matcher.find_edge(l_key, match_name, outcome_key)
+                                if edge_info:
+                                    candidates.append({
+                                        "league": l_key,
+                                        "match_name": match_name,
+                                        "outcome": outcome_key,
+                                        "raw_odds": raw_odds,
+                                        "min_edge": edge_info.get("min_edge", 0.05),
+                                        "oos_edge": edge_info.get("oos_edge", 0.05),
+                                        "n_train": edge_info.get("n_train", 300),
+                                        "tier": 1 if edge_info.get("min_edge", 0.05) >= 0.06 else 2,
+                                        "kickoff_epoch": cycle_ko,
+                                        "category": "Popular",
+                                        "tab_name": m_name,
+                                        "btn_idx": 0,
+                                        "week": week_str,
+                                        "mu_phat": edge_info.get("mu_phat", 0.50)
+                                    })
+                leagues_payload[l_key] = {
+                    "rounds": {
+                        week_str: {
+                            "round_id": f"sim_{l_key}_{rounds_completed}",
+                            "kickoff_epoch": cycle_ko
+                        }
+                    },
+                    "candidates": candidates
+                }
+
+            master_board.sync_from_discovery({
+                "leagues": leagues_payload,
+                "server_epoch": now
+            })
+
+            # 2. Build tickets
+            qualified = master_board.get_all_candidates(server_epoch=now)
+            tickets = builder.build_tickets(
+                qualified, 
+                balance=current_balance, 
+                max_tickets=portfolio_mode.get("max_tickets", 3),
+                profile=matcher.profile,
+                portfolio_mode=portfolio_mode
+            )
+
+            # 3. Simulate execution & settlements
+            if tickets:
+                print(f"[+] MasterBoard: {len(qualified)} edge(s) found. Assembled {len(tickets)} execution ticket(s):")
+                for t_idx, ticket in enumerate(tickets, 1):
+                    stake = ticket.get("stake", 25.0)
+                    comb_odds = ticket.get("combined_odds", 2.0)
+                    win_prob = min(0.95, max(0.05, 1.0 / comb_odds + ticket.get("avg_edge", 0.05)))
+                    won = random.random() < win_prob
+
+                    if won:
+                        payout = round(stake * comb_odds, 2)
+                        current_balance += (payout - stake)
+                        result_str = f"WON (+{CURRENCY_SYMBOL}{payout - stake:.2f})"
+                    else:
+                        current_balance -= stake
+                        result_str = f"LOST (-{CURRENCY_SYMBOL}{stake:.2f})"
+
+                    legs_str = ", ".join(l["match_name"] for l in ticket.get("legs", []))
+                    print(f"    [{ticket['type'].upper()} | Tier {ticket['tier']}]: {legs_str} @ {comb_odds:.2f} | Stake: {CURRENCY_SYMBOL}{stake:.0f} -> {result_str}")
+            else:
+                print(f"[-] No qualified tickets generated this cycle.")
+
+            # 4. Display terminal dashboard
+            net_pnl = current_balance - initial_bankroll
+            pnl_sign = "+" if net_pnl >= 0 else "-"
+            pnl_pct = (net_pnl / initial_bankroll) * 100.0
+            mode_name = portfolio_mode.get("name", "UNKNOWN")
+            print("┌─────────────────────────────────────────────────────────────┐")
+            print(f"│  Starting Capital : {CURRENCY_SYMBOL}{initial_bankroll:>10,.2f}{' ' * 33}│")
+            print(f"│  Paper Balance    : {CURRENCY_SYMBOL}{current_balance:>10,.2f}{' ' * 33}│")
+            print(f"│  Simulated PnL    : {pnl_sign}{CURRENCY_SYMBOL}{abs(net_pnl):>9,.2f} ({pnl_pct:>+6.2f}%){' ' * 23}│")
+            print(f"│  Active Risk Tier : {mode_name:>16}{' ' * 31}│")
+            print("└─────────────────────────────────────────────────────────────┘")
+
+            if max_rounds > 0 and rounds_completed >= max_rounds:
+                print(f"\n[+] Mock simulation completed {max_rounds} round(s) successfully.")
+                break
+            time.sleep(1.0)
+
+    except KeyboardInterrupt:
+        print("\n[*] Mock simulation halted by user.")
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Autonomous Value Trading & Execution Engine")
     parser.add_argument("--profile", default="ultra_conservative", choices=["ultra_conservative", "conservative", "balanced", "expansive"], help="Statistical edge profile")
     parser.add_argument("--dry-run", action="store_true", help="Simulate bet construction without placing real bets")
-    parser.add_argument("--max-rounds", type=int, default=0, help="Stop after N full 4-league cycles (0 for continuous)")
+    parser.add_argument("--mock", action="store_true", help="Run simulated paper-trading engine (no browser/network required)")
+    parser.add_argument("--max-rounds", type=int, default=0, help="Stop after N cycles (0 for continuous)")
     args = parser.parse_args()
 
-    run_loop(profile=args.profile, dry_run=args.dry_run, max_rounds=args.max_rounds)
+    if args.mock:
+        run_mock_loop(profile=args.profile, max_rounds=args.max_rounds)
+    else:
+        run_loop(profile=args.profile, dry_run=args.dry_run, max_rounds=args.max_rounds)
