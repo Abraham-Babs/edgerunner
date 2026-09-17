@@ -219,6 +219,8 @@ class PublicDiscoveryClient:
             if remaining_sec <= 0.0:
                 continue
 
+            category_id = rnd.get("categoryId", 4)
+
             for ev in rnd.get("events", []):
                 ev_id = ev.get("id")
                 participants = ev.get("participants", [])
@@ -253,6 +255,7 @@ class PublicDiscoveryClient:
                                     "league": league_key,
                                     "week": week_str,
                                     "round_id": round_id,
+                                    "category_id": category_id,
                                     "event_id": ev_id,
                                     "selection_id": sel_data.get("id"),
                                     "selection_type_id": sel_id,

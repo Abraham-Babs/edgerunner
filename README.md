@@ -45,14 +45,13 @@ The engine maintains an in-memory sliding window across all 4 leagues:
 - Micro-trebles combine 3 anchor legs across 3 distinct leagues.
 - Candidates sorted by **Tier → Edge descending**.
 
-### 6. In-Betslip Validation & Mobile Touch Emulation
-- Native mobile `tap()` dispatch (bypassing desktop synthetic mouse limitations on SportsExchange mobile web).
-- Spatial jitter and randomized micro-pauses within button bounds.
-- Stake input echo verification before Place Bet.
-- Pre-click odds shift guard (aborts if odds shifted >0.05).
-- In-betslip total odds double-check (aborts if combined odds differ >0.02).
-- Team code and match name presence verification on betslip selection cards.
-- Network-level tracker and promo overlay aborts for high-latency resilience.
+### 6. Two-Layer Execution & Adaptive EDF Scheduler
+- **Earliest Deadline First (EDF) Scheduling**: Sorts tickets strictly by kickoff urgency ($D_1 \le D_2 \dots$).
+- **Adaptive Equal-Slack Pacing**: Distributes available idle time evenly across bets (10s–25s target) with natural human fast-follow bursts (5.0s–7.5s).
+- **Surplus Ticket Preservation**: Tickets exceeding the concurrent risk cap are retained on the MasterBoard across cycles rather than discarded.
+- **Layer 1 (Camouflage Decoy)**: Generates human interaction telemetry ahead of submission (bypassed if $<4.0$s to kickoff).
+- **Layer 2 (In-Session API Dispatch)**: Deterministic, sub-second submission via authenticated browser fetch directly to SportsExchange's scheduled virtuals endpoint.
+- **Post-Submission State Purge**: Programmatically clears betslip localStorage keys and drawer state to keep DOM pristine.
 
 ### 7. Risk Management (Pure Mathematical Model)
 True Equity = `Live Cash + In-Play Stakes`.
@@ -69,8 +68,8 @@ In an independent RNG process (i.i.d.), each round is memoryless. The system rel
 - **No Gambler's Fallacy**: Zero artificial streak cool-offs or profit breathers that interrupt positive-EV compounding.
 - **Match-Level Dedup**: Exposure keyed by `"{league} | {match_name}"` — no duplicate exposure.
 
-### 8. Settlement Logging
-Bet outcomes are logged to `analysis/results/bet_log.csv` with `bet_id`, `outcome`, `returned_amount`, and `code_version`. Settlement reconciliation runs each cycle via the settled bets endpoint.
+### 8. Automated Settlement Logging
+Bet outcomes are logged to `analysis/results/bet_log.csv` with `bet_id`, `outcome` (`WON`/`LOST`), `returned_amount`, and `receipt_file` (coupon code). The engine queries SportsExchange's `/my-bets/virtuals/settled` endpoint via in-session API at startup and cycle boundaries to automatically reconcile outcomes without interrupting the live board.
 
 ---
 
