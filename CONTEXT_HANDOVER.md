@@ -19,7 +19,7 @@
 
 ---
 
-## 2. Architecture: Decoupled Discovery + Targeted Browser Execution
+## 2. Architecture: Decoupled Discovery + Two-Layer Session Execution
 
 The engine operates on a clean two-tier architecture:
 
@@ -28,17 +28,19 @@ The engine operates on a clean two-tier architecture:
 │ 1. HIGH-SPEED HTTP/2 DISCOVERY (engine/discovery/client.py) │
 │    - Scans all 4 leagues concurrently in ~1.5s via HTTP/2   │
 │    - Syncs SportsExchange server clock skew via HTTP Date header   │
-│    - Matches odds against Poisson bivariate lambda models    │
+│    - Matches odds against Poisson bivariate lambda models   │
 │    - Caches qualified +EV edges in MasterBoard memory pool  │
 └──────────────────────────────┬──────────────────────────────┘
                                │ (Only if qualified tickets exist)
 ┌──────────────────────────────▼──────────────────────────────┐
-│ 2. TARGETED PLAYWRIGHT EXECUTION (engine/bettor.py)         │
-│    - Launches headless Chromium disguised as Itel A6611L    │
-│    - Native mobile touch dispatch: element.tap() + jitter   │
-│    - Preloader & modal overlay purger (parser.clean_page)   │
-│    - In-betslip 4-point assertion & stake echo validation   │
-│    - Intercepts and captures screenshot evidence in dry-run │
+│ 2. TWO-LAYER PLAYWRIGHT EXECUTION (engine/bettor.py)        │
+│    - Layer 1 (Camouflage): Sends authentic human UI         │
+│      telemetry ahead of dispatch (<4.0s emergency bypass)   │
+│    - Layer 2 (Dispatch): In-session authenticated API POST  │
+│      to routes/$locale.virtuals.scheduled (sub-second)      │
+│    - Post-Dispatch: Programmatic localStorage & drawer wipe │
+│    - Settlement: In-session API queries to /my-bets/settled │
+│      reconciles WON/LOST and payout directly into log.csv   │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -105,11 +107,16 @@ The system relies strictly on quantitative capital controls:
    Do not query generic `div[class*="drawer"]`—SportsExchange has a hidden standings drawer that matches this selector. Always scope to `[data-testid="betslip-header"]` and its parent tree.
 6. **Unified `--dry-run` and `dry_fire` Flag:**
    `bettor.execute_ticket()` checks `if dry_fire or dry_run:` to ensure that `--dry-run` halts before the final "PLACE BET" tap, saves screenshot proof, and clears the slip without deducting money.
-7. **Settled Bets Endpoint:**
-   Settled bets can be retrieved via HTTP from:
+7. **In-Session Settled Bets API Reconciliation:**
+   Settled bets are queried via the in-session authenticated route:
    `/en-ng/my-bets/virtuals/settled?_data=routes%2F%28%24locale%29.my-bets.virtuals.%24betsType`
+   The engine updates `outcome` (`WON`/`LOST`), `settled_at`, and `returned_amount` in `analysis/results/bet_log.csv` without page navigation or board disturbance.
 8. **Virtual Odds Do NOT Drift / Shift Dynamically:**
-   Virtual football odds are static algorithmic constants determined by the RNG model per matchup—they do not float or drift like real sports markets. If the pre-click odds check detects a mismatch, it is purely a **UI Market Tab Lag** (e.g. the SPA has not finished switching from `1X2` to `Double Chance`). The engine self-heals by re-asserting the round and market tabs.
+   Virtual football odds are static algorithmic constants determined by the RNG model per matchup—they do not float or drift like real sports markets.
+9. **Earliest Deadline First (EDF) Equal-Slack Adaptive Scheduler:**
+   Tickets are sorted by kickoff urgency ($D_1 \le D_2 \dots$). Adaptive pacing dynamically distributes slack (10s–25s target) with occasional fast-follow bursts (5.0s–7.5s). Surplus tickets are retained on the MasterBoard across cycles rather than dropped.
+10. **Zero-Locking Submissions:**
+    SportsExchange accepts tickets down to the millisecond before event kickoff. Any HTTP 400 with `EVENT_EXPIRED` indicates submission occurred after kickoff epoch. Payload submission is deterministic and instant via direct session fetch.
 
 ---
 

@@ -327,15 +327,45 @@ def execute_master_board_bets(page, matcher: EdgeMatcher, builder: TicketBuilder
         portfolio_mode=portfolio_mode
     )
 
-    print(f"[+] Master Builder assembled {len(tickets)} optimal ticket(s) from global board:")
+    # 1. Tag and Sort Tickets by Earliest Kickoff (EDF: Earliest Deadline First)
+    now_ts = time.time()
+    def get_ticket_earliest_ko(t):
+        kos = [l.get("kickoff_epoch", 0) for l in t.get("legs", []) if l.get("kickoff_epoch", 0) > now_ts]
+        return min(kos) if kos else (now_ts + 180.0)
+
+    for t in tickets:
+        t["_earliest_ko"] = get_ticket_earliest_ko(t)
+
+    tickets.sort(key=lambda t: t["_earliest_ko"])
+
+    print(f"[+] Master Builder assembled {len(tickets)} optimal ticket(s) (EDF sorted):")
     for idx, t in enumerate(tickets, 1):
         leg_summary = " + ".join([f"{l.get('league', '').upper()} {l.get('week', '')} {l.get('match_name')}" for l in t["legs"]])
-        print(f"    Ticket {idx} [{t['type'].upper()} | {t['role']}]: {leg_summary} @ {t['combined_odds']} (Stake: ₦{t['stake']})")
+        time_to_ko = max(0.0, t["_earliest_ko"] - now_ts)
+        print(f"    Ticket {idx} [{t['type'].upper()} | {t['role']}]: {leg_summary} @ {t['combined_odds']} (Stake: ₦{t['stake']} | T-{time_to_ko:.0f}s)")
 
-    for ticket in tickets:
+    safety_margin = 5.0
+
+    for idx, ticket in enumerate(tickets, 1):
         if len(risk.active_bets) >= max_active_cap:
-            print(f"[*] Reached max concurrent active bet cap ({max_active_cap}). Holding remaining tickets.")
+            rem_cnt = len(tickets) - idx + 1
+            print(f"[*] Active risk capacity full ({max_active_cap}/{max_active_cap}). Preserving {rem_cnt} ticket(s) on MasterBoard for next cycle.")
             break
+
+        curr_now = time.time()
+        ticket_ko = ticket.get("_earliest_ko", curr_now + 120.0)
+        time_to_ko = max(0.0, ticket_ko - curr_now)
+
+        # Equal-Slack: look ahead at all remaining tickets to calculate bottleneck time slice
+        remaining_tickets = tickets[idx - 1:]
+        step_slacks = []
+        for k_idx, fut_t in enumerate(remaining_tickets):
+            fut_ko = fut_t.get("_earliest_ko", curr_now + 120.0)
+            avail_k = max(0.0, fut_ko - curr_now - safety_margin)
+            step_slacks.append(avail_k / (k_idx + 1))
+
+        bottleneck_slack = min(step_slacks) if step_slacks else 15.0
+        t_budget = max(1.5, min(20.0, bottleneck_slack))
 
         t_type = ticket.get("type", "single")
         if t_type == "double":
@@ -348,6 +378,8 @@ def execute_master_board_bets(page, matcher: EdgeMatcher, builder: TicketBuilder
         success = bettor.execute_ticket(
             ticket, 
             dry_run=dry_run, 
+            time_budget=t_budget,
+            time_to_kickoff=time_to_ko,
             max_odds_cap=t_max_odds,
             min_odds_cap=portfolio_mode.get("min_odds", 1.45)
         )
@@ -407,7 +439,37 @@ def execute_master_board_bets(page, matcher: EdgeMatcher, builder: TicketBuilder
                 page.wait_for_timeout(2000)
                 clean_page(page)
                 break
-        human_pause(1.0, 2.0)
+
+        # Equal-Slack Adaptive Inter-Ticket Pacing:
+        if idx < len(tickets):
+            post_now = time.time()
+            remaining_after = tickets[idx:]
+            after_slacks = []
+            for k_idx, fut_t in enumerate(remaining_after):
+                fut_ko = fut_t.get("_earliest_ko", post_now + 120.0)
+                avail_k = max(0.0, fut_ko - post_now - safety_margin)
+                after_slacks.append(avail_k / (k_idx + 1))
+
+            future_slack = min(after_slacks) if after_slacks else 15.0
+
+            # Natural human distribution:
+            # 1. Occasional fast-follow surge (12% probability): 5s-7.5s gap if slack allows
+            roll_surge = random.random()
+            if roll_surge < 0.12 and future_slack >= 6.0:
+                inter_delay = random.uniform(5.0, 7.5)
+            # 2. Generous slack: smooth human 14s-26s spacing
+            elif future_slack >= 24.0:
+                inter_delay = random.uniform(14.0, min(26.0, future_slack * 0.75))
+            # 3. Moderate slack: 9s-14s spacing
+            elif future_slack >= 11.0:
+                inter_delay = random.uniform(9.0, min(14.0, future_slack * 0.85))
+            # 4. Compressed slack: 5s-8s spacing
+            else:
+                inter_delay = max(5.0, min(8.0, future_slack * 0.9))
+
+            actual_delay = max(5.0, min(inter_delay, future_slack)) if future_slack > 5.0 else max(1.0, future_slack)
+            print(f"[*] Adaptive Pacing: spacing next ticket by {actual_delay:.1f}s (global slack: {future_slack:.1f}s)...")
+            human_pause(actual_delay * 0.85, actual_delay)
 
 def run_loop(profile: str = "ultra_conservative", dry_run: bool = False, max_rounds: int = 0):
     print("==================================================")
@@ -470,6 +532,7 @@ def run_loop(profile: str = "ultra_conservative", dry_run: bool = False, max_rou
 
         risk = RiskManager(initial_balance=init_balance)
         print(f"[+] Initialized Risk Manager with Verified Starting Bankroll: ₦{init_balance:,.2f}")
+        bettor.reconcile_settled_bets()
 
         rounds_completed = 0
         try:

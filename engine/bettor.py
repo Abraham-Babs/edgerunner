@@ -117,14 +117,151 @@ class Bettor:
         _sync_root_bet_log()
         return bet_id
 
-    def execute_ticket(self, ticket: Dict[str, Any], dry_run: bool = False, dry_fire: bool = False, max_odds_cap: Optional[float] = None, min_odds_cap: Optional[float] = None) -> bool:
+    def purge_betslip_state(self):
+        """Immediately wipes all client-side betslip localStorage keys and closes the drawer."""
+        try:
+            self.page.evaluate("""() => {
+                const keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const k = localStorage.key(i);
+                    if (k && (k.toLowerCase().includes('slip') || k.toLowerCase().includes('bet') || k.toLowerCase().includes('ticket'))) {
+                        keysToRemove.push(k);
+                    }
+                }
+                keysToRemove.forEach(k => localStorage.removeItem(k));
+            }""")
+        except Exception:
+            pass
+        self.close_betslip()
+
+    def dispatch_session_bet(self, ticket: Dict[str, Any], dry_run: bool = False) -> Dict[str, Any]:
+        """
+        Submits the ticket directly via the authenticated browser session fetch() to SportsExchange's
+        scheduled virtuals action endpoint: routes/$locale.virtuals.scheduled.
+        Completely immune to DOM layout shifts and visual rendering lags.
+        """
+        stake = float(ticket["stake"])
+        legs = ticket["legs"]
+        ticket_type_str = ticket.get("type", "single").lower()
+
+        type_map = {"single": 1, "double": 2, "treble": 3, "multiple": 2}
+        sub_type = type_map.get(ticket_type_str, len(legs))
+
+        # Default categoryId map fallback
+        cat_id_map = {"league_en": 4, "league_es": 37, "league_it": 38, "league_de": 16}
+
+        odds_items = []
+        comb_odds = 1.0
+        for leg in legs:
+            raw_odds = float(leg.get("raw_odds", 1.0))
+            comb_odds *= raw_odds
+            l_key = leg.get("league", "league_en")
+            c_id = leg.get("category_id") or cat_id_map.get(l_key, 4)
+            odds_items.append({
+                "id": int(leg.get("selection_id")),
+                "value": raw_odds,
+                "banker": None,
+                "categoryId": int(c_id)
+            })
+
+        comb_odds = round(comb_odds, 2)
+        pot_win = round(stake * comb_odds, 2)
+        req_id = str(uuid.uuid4())[:20]
+        now_iso = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.000Z")
+
+        payload = {
+            "action": "placeBet",
+            "data": {
+                "betslipData": {
+                    "requestUniqueIdentifier": req_id,
+                    "discrimination": 19010103,
+                    "type": sub_type,
+                    "odds": odds_items,
+                    "stakeGross": stake,
+                    "stakeNet": stake,
+                    "minPotentialWinGross": pot_win,
+                    "minPotentialWinNet": pot_win,
+                    "maxPotentialWinGross": pot_win,
+                    "maxPotentialWinNet": pot_win
+                },
+                "clientTime": now_iso,
+                "serverSyncedTime": now_iso,
+                "serverSyncedTimeWithoutLatency": now_iso,
+                "adjust": {"adjustId": "", "adjustIdfa": "", "gpsAdId": ""}
+            }
+        }
+
+        if dry_run:
+            ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+            diag_path = f"{SHOTS_DIR}/dry_run_payload_{ts}.png"
+            try:
+                self.page.screenshot(path=diag_path, timeout=2500)
+            except Exception:
+                pass
+            print(f"[+] [DRY RUN] Verified API payload construction ({sub_type} leg(s) @ {comb_odds}, stake ₦{stake}). 0 money deducted.")
+            return {
+                "success": True,
+                "dry_run": True,
+                "coupon_code": "DRY_RUN_VERIFIED",
+                "receipt_file": diag_path
+            }
+
+        try:
+            res = self.page.evaluate("""async (payload) => {
+                try {
+                    const resp = await fetch('https://sports-exchange.internal/en-ng/virtuals/scheduled?_data=routes%2F%24locale.virtuals.scheduled', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': '*/*'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await resp.json();
+                    return { status: resp.status, ok: resp.ok, data: data };
+                } catch (err) {
+                    return { ok: false, error: err.toString() };
+                }
+            }""", payload)
+
+            if res and res.get("ok"):
+                data = res.get("data", {}).get("data", {})
+                if data.get("placed"):
+                    coupon = data.get("couponCode", "")
+                    print(f"[+] Bet successfully placed via Session API! Coupon: {coupon}")
+                    return {
+                        "success": True,
+                        "coupon_code": coupon,
+                        "raw": data
+                    }
+                else:
+                    err_msg = res.get("data", {})
+                    print(f"[!] Platform rejected bet placement: {err_msg}")
+                    return {"success": False, "error": str(err_msg)}
+            else:
+                err_body = res.get("data") or res.get("error") or res.get("status")
+                print(f"[!] In-session fetch failed ({res.get('status')}): {err_body}")
+                return {"success": False, "error": str(err_body)}
+        except Exception as e:
+            print(f"[!] Exception during dispatch_session_bet: {e}")
+            return {"success": False, "error": str(e)}
+
+    def execute_ticket(
+        self, 
+        ticket: Dict[str, Any], 
+        dry_run: bool = False, 
+        dry_fire: bool = False, 
+        time_budget: Optional[float] = None,
+        time_to_kickoff: Optional[float] = None,
+        max_odds_cap: Optional[float] = None, 
+        min_odds_cap: Optional[float] = None
+    ) -> bool:
         """
         Executes a single or multi-leg ticket:
-        1. Taps each odds selection
-        2. Opens betslip
-        3. Enters stake
-        4. Submits bet (unless dry_fire is True)
-        5. Validates confirmation screen
+        1. Evaluates dynamic time budget and kickoff proximity.
+        2. Layer 1 (Camouflage): Sends authentic human UI telemetry ahead of dispatch.
+        3. Layer 2 (Dispatch): In-session authenticated API dispatch.
+        4. Post-Submission: Purges betslip state and dismisses drawer.
         """
         ticket_type = ticket["type"]
         stake = ticket["stake"]
@@ -150,263 +287,60 @@ class Bettor:
 
         # Ensure any open betslip, promo popup, or receipt is dismissed and clean before tapping odds
         clean_page(self.page)
-        self.close_betslip()
-        self.reset_betslip()
+        self.purge_betslip_state()
 
+        now_epoch = time.time()
+        if time_to_kickoff is None:
+            leg_expiries = [l.get("kickoff_epoch", 0) for l in legs if l.get("kickoff_epoch", 0) > now_epoch]
+            time_to_kickoff = max(0.0, min(leg_expiries) - now_epoch) if leg_expiries else 120.0
+
+        effective_budget = time_budget if time_budget is not None else 3.0
+
+        # --- LAYER 1: LIGHTWEIGHT CAMOUFLAGE DECOY ---
+        # Normal path: runs before Layer 2 to establish human telemetry on SportsExchange's edge.
+        # Emergency path: if time to kickoff is critically low (<4.0s), bypass completely.
+        if time_to_kickoff < 4.0:
+            print(f"[!] EMERGENCY PREEMPTION: Only {time_to_kickoff:.1f}s to kickoff. Bypassing Layer 1 decoy.")
+        else:
+            try:
+                if time_to_kickoff > 20.0:
+                    jitter_pause = random.uniform(2.5, 4.5)
+                else:
+                    jitter_pause = random.uniform(1.2, 2.5)
+
+                human_pause(0.3, 0.6)
+                visible_odds = self.page.locator('[data-testid="match-odd"]')
+                if visible_odds.count() > 0:
+                    target_btn = visible_odds.first
+                    if target_btn.is_visible(timeout=300):
+                        target_btn.click(timeout=400)
+                rem_pre_dispatch = max(0.4, jitter_pause - 0.5)
+                self.page.wait_for_timeout(int(rem_pre_dispatch * 1000))
+            except Exception:
+                pass
+
+        # --- LAYER 2: DETERMINISTIC IN-SESSION API DISPATCH ---
+        # The bet is sent directly via the authenticated browser session fetch() to SportsExchange.
+        # Zero DOM button clicking, zero delay, sub-second execution.
         try:
-            # Click each leg's button with multi-market tab support
-            for leg in legs:
-                match_name = leg.get("match_name", "")
-                category = leg.get("category", "Popular")
-                tab_name = leg.get("tab_name", "1X2")
-                btn_idx = leg.get("btn_idx", 0)
-                week = leg.get("week", None)
-                league = leg.get("league", None)
-
-                # Switch league if cross-league ticket
-                if league:
-                    switched = self.switch_league(league)
-                    if not switched:
-                        print(f"[-] Could not switch to league {league}. Aborting ticket.")
-                        self.last_failure_reason = "LEAGUE_SWITCH_FAILED"
-                        return False
-                    human_pause(0.2, 0.5)
-
-                # Ensure target round week tab is active so secondary markets reveal its fixtures
-                if week:
-                    select_week_tab(self.page, week)
-                    human_pause(0.2, 0.4)
-
-                # Ensure target market tab is active
-                self.select_market(category, tab_name)
-                human_pause(0.3, 0.7)
-
-                # Click odds button with pre-click odds validation and active self-correction
-                expected_odds = leg.get("raw_odds")
-                clicked = self.click_fixture_button(
-                    match_name, btn_idx, week=week, tab_name=tab_name, expected_odds=expected_odds
-                )
-                if not clicked:
-                    # Active self-correction: if timer permits, re-assert week and market tab and retry
-                    slip_cd = self.get_betslip_expiry_seconds() or 30
-                    if slip_cd > 12:
-                        print(f"[*] Pre-click mismatch or tab shift for {match_name}. Re-asserting {week or ''} & {tab_name}...")
-                        if week:
-                            select_week_tab(self.page, week)
-                            self.page.wait_for_timeout(300)
-                        self.select_market(category, tab_name)
-                        self.page.wait_for_timeout(400)
-                        clicked = self.click_fixture_button(
-                            match_name, btn_idx, week=week, tab_name=tab_name, expected_odds=expected_odds
-                        )
-                if not clicked:
-                    print(f"[-] Odds button for {match_name} ({week}) failed verification or could not be clicked. Aborting ticket.")
-                    self.last_failure_reason = "BUTTON_NOT_FOUND"
-                    return False
-                self.page.wait_for_timeout(random.randint(600, 1100))
-
-            # Open Betslip with verified testid selector
-            try:
-                human_pause(0.4, 0.9)
-                betslip_selectors = [
-                    'button[data-testid="bottom-nav-item-betslip"]',
-                    '[data-testid="acca-bonus-selections-wrapper"]',
-                    '[data-testid="acca-bonus-wrapper"]',
-                    "button:has-text('Betslip')",
-                    "a[href*='betslip']"
-                ]
-                if not self.is_betslip_open():
-                    for sel in betslip_selectors:
-                        el = self.page.locator(sel).first
-                        if el.count() > 0 and el.is_visible(timeout=1000):
-                            try:
-                                el.tap()
-                            except Exception:
-                                el.click(force=True)
-                            break
-                    self.page.wait_for_timeout(800)
-
-                # Dismiss expired events banner if present
-                rem_exp = self.page.locator("button:has-text('REMOVE EXPIRED'), button:has-text('Remove Expired')").first
-                if rem_exp.count() > 0 and rem_exp.is_visible(timeout=1000):
-                    print("[*] Detected expired events banner. Tapping REMOVE EXPIRED...")
-                    rem_exp.click(force=True)
-                    self.page.wait_for_timeout(600)
-
-                # Wait for stake input to become visible in drawer
-                stake_field = self.page.locator('input[data-testid="betslip-stake-amount"], input[inputmode="decimal"]').first
-                try:
-                    stake_field.wait_for(state="visible", timeout=6000)
-                except Exception:
-                    pass
-
-                # Hard gate: betslip must be open before proceeding
-                if not self.is_betslip_open():
-                    print(f"[!] REJECTED: Betslip drawer did not open after tap. Aborting ticket.")
-                    self.last_failure_reason = "BETSLIP_NOT_OPEN"
-                    self.capture_diagnostic("betslip_not_open")
-                    return False
-            except Exception as e:
-                print(f"\n[!] ALERT: Failed to open betslip: {e}")
-                self.capture_diagnostic("betslip_open_error")
-                return False
-
-            # Explicitly select Singles vs Multiple / Acca tab based on ticket type
-            if ticket_type == "single":
-                try:
-                    s_tab = self.page.locator("button:has-text('Singles'), p:has-text('Singles')").first
-                    if s_tab.count() > 0 and s_tab.is_visible(timeout=300):
-                        human_tap(s_tab, self.page)
-                        self.page.wait_for_timeout(300)
-                except Exception:
-                    pass
-            elif ticket_type in ("double", "treble"):
-                try:
-                    m_tab = self.page.locator("button:has-text('Multiple'), button:has-text('Multiples'), p:has-text('Multiple'), p:has-text('Multiples'), button:has-text('Acca')").first
-                    if m_tab.count() > 0 and m_tab.is_visible(timeout=300):
-                        human_tap(m_tab, self.page)
-                        self.page.wait_for_timeout(300)
-                except Exception:
-                    pass
-
-            # In-Betslip Stateful 3-Point Validation (Zero-Tolerance)
-            slip_odds = self.get_betslip_total_odds()
-            expected_odds = ticket.get("combined_odds", 1.0)
-            if slip_odds is None or abs(slip_odds - expected_odds) > 0.02:
-                print(f"[!] REJECTED: Slip odds {slip_odds} != expected {expected_odds}. Aborting bet.")
-                self.last_failure_reason = "ODDS_MISMATCH"
-                self.capture_diagnostic("odds_mismatch_rejected")
-                self.clear_betslip_selections()
-                self.close_betslip()
-                return False
-
-            # Assert all match names exist in betslip drawer
-            drawer_text = self.page.evaluate("""() => {
-                const header = document.querySelector('[data-testid="betslip-header"]');
-                if (header) {
-                    let curr = header;
-                    while (curr.parentElement && curr.parentElement !== document.body) {
-                        curr = curr.parentElement;
-                    }
-                    return curr.innerText || '';
-                }
-                const all = Array.from(document.querySelectorAll('div'));
-                const bs = all.find(d => (d.innerText || '').includes('VIRTUALS BETSLIP') && (d.innerText || '').includes('PLACE BET'));
-                return bs ? bs.innerText : (document.body.innerText || '');
-            }""")
-            for leg in legs:
-                exp_match = leg.get("match_name", "")
-                teams = [t.strip() for t in exp_match.split("-")] if "-" in exp_match else [exp_match.strip()]
-                matched = (exp_match in drawer_text) or all(t in drawer_text for t in teams)
-                if exp_match and not matched:
-                    print(f"[!] REJECTED: Slip missing expected leg {exp_match}. Aborting bet.")
-                    self.last_failure_reason = "MATCH_MISMATCH"
-                    self.capture_diagnostic("match_mismatch_rejected")
-                    self.clear_betslip_selections()
-                    self.close_betslip()
-                    return False
-
-            # In-Betslip Live Expiry Guard (Lean 1s cutoff - accepts bets down to final second)
-            slip_sec = self.get_betslip_expiry_seconds()
-            if slip_sec is not None:
-                print(f"[*] In-Betslip Expiration Timer: {slip_sec}s remaining")
-                if slip_sec <= 0:
-                    print(f"[!] REJECTED: Slip timer expired (0s remaining). Aborting to avoid platform lockout.")
-                    self.last_failure_reason = "EXPIRED_TIMER"
-                    self.capture_diagnostic("slip_timer_expired")
-                    bet_id = self.log_bet(ticket, status="REJECTED_EXPIRED_0s")
-                    return False
-
-            # Input Stake with resilient input selectors and verified echo assertion
-            try:
-                stake_selectors = [
-                    "input[data-testid='betslip-stake-amount']",
-                    "input[inputmode='decimal']",
-                    "input[type='number']",
-                    "input[inputmode='numeric']",
-                    "input[placeholder*='Stake']",
-                    "input[type='text']"
-                ]
-                stake_input = None
-                for sel in stake_selectors:
-                    inp = self.page.locator(sel).first
-                    if inp.count() > 0 and inp.is_visible(timeout=1500):
-                        stake_input = inp
-                        break
-
-                if stake_input:
-                    stake_str = str(int(stake) if stake.is_integer() else stake)
-                    human_pause(0.3, 0.7)
-                    human_type(stake_input, stake_str)
-                    self.page.wait_for_timeout(random.randint(400, 700))
-
-                    # Stake echo assertion: verify field holds the exact typed stake
-                    val = (stake_input.input_value() or "").strip().replace(",", "")
-                    if val != stake_str:
-                        stake_input.fill("")
-                        human_pause(0.1, 0.2)
-                        human_type(stake_input, stake_str)
-                        val = (stake_input.input_value() or "").strip().replace(",", "")
-                        if val != stake_str:
-                            print(f"[!] REJECTED: Stake input echo '{val}' != expected '{stake_str}'. Aborting bet.")
-                            return False
-                else:
-                    print("\n[!] ALERT: Stake input element not found in betslip! Layout may have shifted.")
-                    self.capture_diagnostic("stake_input_missing")
-                    return False
-            except Exception as e:
-                print(f"\n[!] ALERT: Failed entering stake: {e}")
-                self.capture_diagnostic("stake_entry_error")
-                return False
-
-            # Intercept if DRY FIRE / DRY RUN: take verification screenshot and safely abort before submit
-            if dry_fire or dry_run:
-                ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-                diag_path = f"{SHOTS_DIR}/dry_fire_slip_{ts}.png"
-                self.page.screenshot(path=diag_path)
-                print(f"[+] [DRY FIRE] Verified full DOM pipeline without betting! Evidence: {diag_path}")
-                bet_id = self.log_bet(ticket, status="DRY_FIRE_VERIFIED", receipt_file=diag_path)
-                self.clear_betslip_selections()
-                self.close_betslip()
+            dispatch_res = self.dispatch_session_bet(ticket, dry_run=dry_fire)
+            if dispatch_res.get("success"):
+                coupon = dispatch_res.get("coupon_code", "")
+                receipt_file = coupon if coupon else dispatch_res.get("receipt_file", "")
+                status_str = "DRY_FIRE_VERIFIED" if dry_fire else "CONFIRMED_SUCCESS"
+                self.log_bet(ticket, status=status_str, receipt_file=receipt_file)
+                leg_expiries = [l.get("kickoff_epoch", 0) for l in legs if l.get("kickoff_epoch", 0) > now_epoch]
+                self.last_placed_slip_expiry = int(min(leg_expiries) - now_epoch) if leg_expiries else 120
                 return True
-
-            # Submit Bet with resilient button selectors
-            try:
-                place_selectors = [
-                    "button:has-text('PLACE BET')",
-                    "button:has-text('Place Bet')",
-                    "button:has-text('Confirm Bet')",
-                    "button[data-testid*='place-bet']",
-                    "button[type='submit']"
-                ]
-                place_btn = None
-                for sel in place_selectors:
-                    btn = self.page.locator(sel).first
-                    if btn.count() > 0 and btn.is_visible(timeout=1500):
-                        place_btn = btn
-                        break
-
-                if place_btn:
-                    human_pause(0.6, 1.4)
-                    human_tap(place_btn, self.page)
-                    self.page.wait_for_timeout(4500)
-                    
-                    self.last_placed_slip_expiry = slip_sec
-                    print(f"[+] Bet successfully placed!")
-                    bet_id = self.log_bet(ticket, status="CONFIRMED_SUCCESS")
-                    return True
-                else:
-                    print("\n[!] ALERT: PLACE BET button not visible on screen! Betting aborted safely.")
-                    self.capture_diagnostic("place_bet_missing")
-                    bet_id = self.log_bet(ticket, status="SUBMISSION_BUTTON_UNAVAILABLE")
-                    return False
-            except Exception as e:
-                print(f"\n[!] ALERT: Error during bet submission: {e}")
-                self.capture_diagnostic("submission_exception")
-                bet_id = self.log_bet(ticket, status=f"SUBMISSION_ERROR: {e}")
+            else:
+                err_str = dispatch_res.get("error", "DISPATCH_FAILED")
+                self.last_failure_reason = "DISPATCH_FAILED"
+                self.log_bet(ticket, status=f"REJECTED_{err_str}")
                 return False
         finally:
-            self.close_betslip()
+            # --- POST-SUBMISSION STATE PURGE ---
+            # programmatically wipes betslip keys and closes drawer so DOM is pristine for next ticket
+            self.purge_betslip_state()
 
     def is_betslip_open(self) -> bool:
         """Returns True if the betslip drawer or empty betslip overlay is currently open on screen."""
@@ -830,80 +764,81 @@ class Bettor:
 
     def reconcile_settled_bets(self):
         """
-        Periodically checks settled bets from the platform to verify real outcome & payout.
-        Records settled status back to bet log for empirical tracking.
+        In-session API reconciliation of settled bets.
+        Queries SportsExchange's /my-bets/virtuals/settled route to match placed tickets
+        and record exact outcome ('WON' / 'LOST') and returned_amount to bet_log.csv.
+        Zero DOM interaction, non-disruptive to active betting boards.
         """
         try:
-            my_bets_btn = self.page.locator("a[href*='bets'], [data-testid*='my-bets'], button:has-text('My Bets')").first
-            if my_bets_btn.count() > 0 and my_bets_btn.is_visible(timeout=1000):
-                human_tap(my_bets_btn, self.page)
-                self.page.wait_for_timeout(1500)
-                settled_items = self.page.evaluate("""() => {
-                    const items = [];
-                    const cards = Array.from(document.querySelectorAll('[data-testid*="bet-card"], div[class*="bet-card"]'));
-                    for (const card of cards) {
-                        const txt = card.innerText || '';
-                        let status = 'PENDING';
-                        if (/won/i.test(txt)) status = 'WON';
-                        else if (/lost/i.test(txt)) status = 'LOST';
-                        else if (/void/i.test(txt)) status = 'VOID';
-                        items.push({ text: txt.slice(0, 1000), status: status });
-                    }
-                    return items;
-                }""")
-                if settled_items:
-                    print(f"[+] Reconciled {len(settled_items)} platform bet records.")
-                    if self.pending_bets:
-                        updates = {}
-                        for item in settled_items:
-                            c_status = item.get("status")
-                            if c_status in ("PENDING", None):
-                                continue
-                            c_text = item.get("text", "").lower()
-                            matching_ids = []
-                            for p_id, p_info in list(self.pending_bets.items()):
-                                m_names = p_info.get("match_names", [])
-                                if m_names and all(m.lower() in c_text for m in m_names):
-                                    matching_ids.append(p_id)
+            url = "/en-ng/my-bets/virtuals/settled?_data=routes%2F%28%24locale%29.my-bets.virtuals.%24betsType"
+            res = self.page.evaluate("""async (u) => {
+                try {
+                    const r = await fetch(u, { headers: { 'Accept': 'application/json' } });
+                    return await r.json();
+                } catch(e) {
+                    return { error: e.toString() };
+                }
+            }""", url)
 
-                            # Skip ambiguous matches (0 or >1)
-                            if len(matching_ids) == 1:
-                                match_id = matching_ids[0]
-                                p_data = self.pending_bets[match_id]
-                                # Calculated payout (stake * combined_odds) since platform card text does not reliably expose net return
-                                ret_amt = round(p_data["stake"] * p_data["combined_odds"], 2) if c_status == "WON" else 0.0
-                                updates[match_id] = {
-                                    "outcome": c_status,
-                                    "settled_at": datetime.utcnow().isoformat(),
-                                    "returned_amount": ret_amt
-                                }
+            coupons = res.get("couponsData", {}).get("coupons", [])
+            if not coupons or not os.path.exists(BET_LOG_FILE):
+                return
 
-                        if updates and os.path.exists(BET_LOG_FILE):
-                            try:
-                                df = pd.read_csv(BET_LOG_FILE, dtype={"settled_at": str, "outcome": str, "bet_id": str, "code_version": str})
-                                df["settled_at"] = df["settled_at"].fillna("")
-                                df["outcome"] = df["outcome"].fillna("")
-                                for m_id, u_info in updates.items():
-                                    idx = df.index[df["bet_id"] == m_id]
-                                    if len(idx) > 0:
-                                        df.loc[idx, "outcome"] = u_info["outcome"]
-                                        df.loc[idx, "settled_at"] = u_info["settled_at"]
-                                        df.loc[idx, "returned_amount"] = u_info["returned_amount"]
-                                        self.pending_bets.pop(m_id, None)
+            df = pd.read_csv(BET_LOG_FILE, dtype={"settled_at": str, "outcome": str, "bet_id": str, "code_version": str, "receipt_file": str})
+            df["settled_at"] = df["settled_at"].fillna("")
+            df["outcome"] = df["outcome"].fillna("")
+            df["receipt_file"] = df["receipt_file"].fillna("")
 
-                                d_name = os.path.dirname(os.path.abspath(BET_LOG_FILE))
-                                with tempfile.NamedTemporaryFile("w", dir=d_name, delete=False, newline="", encoding="utf-8") as tf:
-                                    temp_path = tf.name
-                                df.to_csv(temp_path, index=False)
-                                os.replace(temp_path, BET_LOG_FILE)
-                                _sync_root_bet_log()
-                                print(f"[+] Successfully updated {len(updates)} settled bet(s) in log.")
-                            except Exception as write_err:
-                                print(f"[!] Error updating bet_log with settlement: {write_err}")
+            pending_mask = (df["status"] == "CONFIRMED_SUCCESS") & (df["outcome"].isin(["PENDING", ""]))
+            pending_indices = df[pending_mask].index.tolist()
+            if not pending_indices:
+                return
 
-                self.close_betslip()
-        except Exception:
-            pass
+            updated = 0
+            for idx in pending_indices:
+                row = df.loc[idx]
+                row_stake = float(row.get("stake", 0.0))
+                row_odds = float(row.get("combined_odds", 0.0))
+                row_receipt = str(row.get("receipt_file", "")).strip()
+
+                match = None
+                for c in coupons:
+                    c_code = str(c.get("couponCode", "")).strip()
+                    c_stake = round(float(c.get("stakeGross", 0.0)), 2)
+                    c_odds = round(float(c.get("totalOdds", 0.0)), 2)
+
+                    if row_receipt and row_receipt == c_code:
+                        match = c
+                        break
+                    elif not row_receipt and abs(row_stake - c_stake) < 0.01 and abs(row_odds - c_odds) < 0.02:
+                        match = c
+                        break
+
+                if match:
+                    raw_status = str(match.get("status", "")).lower()
+                    outcome_val = "WON" if raw_status == "won" else "LOST" if raw_status == "lost" else raw_status.upper()
+                    won_amt = float(match.get("won", 0.0))
+                    settled_time = match.get("couponDate") or datetime.utcnow().isoformat()
+                    c_code = str(match.get("couponCode", "")).strip()
+
+                    df.loc[idx, "outcome"] = outcome_val
+                    df.loc[idx, "settled_at"] = settled_time
+                    df.loc[idx, "returned_amount"] = won_amt
+                    if not row_receipt:
+                        df.loc[idx, "receipt_file"] = c_code
+                    updated += 1
+                    self.pending_bets.pop(row.get("bet_id", ""), None)
+
+            if updated > 0:
+                d_name = os.path.dirname(os.path.abspath(BET_LOG_FILE))
+                with tempfile.NamedTemporaryFile("w", dir=d_name, delete=False, newline="", encoding="utf-8") as tf:
+                    temp_path = tf.name
+                df.to_csv(temp_path, index=False)
+                os.replace(temp_path, BET_LOG_FILE)
+                _sync_root_bet_log()
+                print(f"[+] Settlement Reconciliation: updated {updated} bet(s) in log (WON/LOST).")
+        except Exception as e:
+            print(f"[!] Warning: Settlement reconciliation encountered an error: {e}")
 
     def ensure_authenticated(self) -> bool:
         """Checks if session is active; attempts automatic login if credentials exist in .env."""
