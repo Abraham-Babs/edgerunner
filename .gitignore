@@ -27,7 +27,9 @@ binned_parquets/
 *.log
 *.png
 analysis/screenshots/
-analysis/
+analysis/results/*
+!analysis/results/confirmed_edges.csv
+analysis/*.py
 bet_log.csv
 lookup/
 # Large raw datasets & live logs
