@@ -1,0 +1,4058 @@
+{
+  "league_en": {
+    "FUL - SUN": {
+      "1X2": {
+        "1x2_1_val": {
+          "raw": 2.29,
+          "fair_prob": 0.4367
+        },
+        "1x2_x_val": {
+          "raw": 3.03,
+          "fair_prob": 0.33
+        },
+        "1x2_2_val": {
+          "raw": 3.53,
+          "fair_prob": 0.2833
+        }
+      },
+      "Double Chance": {
+        "double_chance_1x_val": {
+          "raw": 1.27,
+          "fair_prob": 0.7874
+        },
+        "double_chance_12_val": {
+          "raw": 1.36,
+          "fair_prob": 0.7353
+        },
+        "double_chance_x2_val": {
+          "raw": 1.59,
+          "fair_prob": 0.6289
+        }
+      },
+      "BTTS (GG/NG)": {
+        "gg_ng_gg_val": {
+          "raw": 1.83,
+          "fair_prob": 0.5464
+        },
+        "gg_ng_ng_val": {
+          "raw": 1.97,
+          "fair_prob": 0.5076
+        }
+      },
+      "Total O/U 1.5": {
+        "o_u_1_5_ov_val": {
+          "raw": 1.32,
+          "fair_prob": 0.7576
+        },
+        "o_u_1_5_un_val": {
+          "raw": 3.35,
+          "fair_prob": 0.2985
+        }
+      },
+      "Total O/U 2.5": {
+        "o_u_2_5_ov_val": {
+          "raw": 2.07,
+          "fair_prob": 0.4831
+        },
+        "o_u_2_5_un_val": {
+          "raw": 1.75,
+          "fair_prob": 0.5714
+        }
+      },
+      "Total O/U 3.5": {
+        "o_u_3_5_ov_val": {
+          "raw": 3.73,
+          "fair_prob": 0.2681
+        },
+        "o_u_3_5_un_val": {
+          "raw": 1.26,
+          "fair_prob": 0.7937
+        }
+      },
+      "Total O/U 4.5": {
+        "o_u_4_5_ov_val": {
+          "raw": 9.14,
+          "fair_prob": 0.1094
+        },
+        "o_u_4_5_un_val": {
+          "raw": 1.05,
+          "fair_prob": 0.9524
+        }
+      },
+      "Home O/U 0.5": {
+        "home_o_u_0_5_ov_val": {
+          "raw": 1.25,
+          "fair_prob": 0.8
+        },
+        "home_o_u_0_5_un_val": {
+          "raw": 3.86,
+          "fair_prob": 0.2591
+        }
+      },
+      "Home O/U 1.5": {
+        "home_o_u_1_5_ov_val": {
+          "raw": 2.29,
+          "fair_prob": 0.4367
+        },
+        "home_o_u_1_5_un_val": {
+          "raw": 1.61,
+          "fair_prob": 0.6211
+        }
+      },
+      "Home O/U 2.5": {
+        "home_o_u_2_5_ov_val": {
+          "raw": 5.94,
+          "fair_prob": 0.1684
+        },
+        "home_o_u_2_5_un_val": {
+          "raw": 1.14,
+          "fair_prob": 0.8772
+        }
+      },
+      "Home O/U 3.5": {
+        "home_o_u_3_5_ov_val": {
+          "raw": 21.0,
+          "fair_prob": 0.0476
+        },
+        "home_o_u_3_5_un_val": {
+          "raw": null,
+          "fair_prob": null
+        }
+      },
+      "Away O/U 0.5": {
+        "away_o_u_0_5_ov_val": {
+          "raw": 1.41,
+          "fair_prob": 0.7092
+        },
+        "away_o_u_0_5_un_val": {
+          "raw": 2.86,
+          "fair_prob": 0.3497
+        }
+      },
+      "Away O/U 1.5": {
+        "away_o_u_1_5_ov_val": {
+          "raw": 3.1,
+          "fair_prob": 0.3226
+        },
+        "away_o_u_1_5_un_val": {
+          "raw": 1.36,
+          "fair_prob": 0.7353
+        }
+      },
+      "Away O/U 2.5": {
+        "away_o_u_2_5_ov_val": {
+          "raw": 9.96,
+          "fair_prob": 0.1004
+        },
+        "away_o_u_2_5_un_val": {
+          "raw": 1.04,
+          "fair_prob": 0.9615
+        }
+      },
+      "Away O/U 3.5": {
+        "away_o_u_3_5_ov_val": {
+          "raw": 44.4,
+          "fair_prob": 0.0225
+        },
+        "away_o_u_3_5_un_val": {
+          "raw": null,
+          "fair_prob": null
+        }
+      },
+      "Clean Sheet (Home)": {
+        "home_clean_sheet_yes_val": {
+          "raw": 2.86,
+          "fair_prob": 0.3497
+        },
+        "home_clean_sheet_no_val": {
+          "raw": 1.41,
+          "fair_prob": 0.7092
+        }
+      },
+      "Clean Sheet (Away)": {
+        "away_clean_sheet_yes_val": {
+          "raw": 3.86,
+          "fair_prob": 0.2591
+        },
+        "away_clean_sheet_no_val": {
+          "raw": 1.25,
+          "fair_prob": 0.8
+        }
+      },
+      "Both Team to score In First Halves": {
+        "goal_goal_ht_yes_val": {
+          "raw": 4.33,
+          "fair_prob": 0.2309
+        },
+        "goal_goal_ht_no_val": {
+          "raw": 1.21,
+          "fair_prob": 0.8264
+        }
+      },
+      "Correct Score (FT)": {
+        "correct_score_0_0_val": {
+          "raw": 9.58,
+          "fair_prob": 0.1044
+        },
+        "correct_score_0_1_val": {
+          "raw": 11.1,
+          "fair_prob": 0.0901
+        },
+        "correct_score_0_2_val": {
+          "raw": 18.7,
+          "fair_prob": 0.0535
+        },
+        "correct_score_0_3_val": {
+          "raw": 48.9,
+          "fair_prob": 0.0204
+        },
+        "correct_score_0_4_val": {
+          "raw": 165.0,
+          "fair_prob": 0.0061
+        },
+        "correct_score_0_5_val": {
+          "raw": 697.0,
+          "fair_prob": 0.0014
+        },
+        "correct_score_0_6_val": {
+          "raw": 3665.0,
+          "fair_prob": 0.0003
+        },
+        "correct_score_1_0_val": {
+          "raw": 8.11,
+          "fair_prob": 0.1233
+        },
+        "correct_score_1_1_val": {
+          "raw": 6.37,
+          "fair_prob": 0.157
+        },
+        "correct_score_1_2_val": {
+          "raw": 13.5,
+          "fair_prob": 0.0741
+        },
+        "correct_score_1_3_val": {
+          "raw": 34.8,
+          "fair_prob": 0.0287
+        },
+        "correct_score_1_4_val": {
+          "raw": 117.0,
+          "fair_prob": 0.0085
+        },
+        "correct_score_1_5_val": {
+          "raw": 523.0,
+          "fair_prob": 0.0019
+        },
+        "correct_score_2_0_val": {
+          "raw": 11.5,
+          "fair_prob": 0.087
+        },
+        "correct_score_2_1_val": {
+          "raw": 9.81,
+          "fair_prob": 0.1019
+        },
+        "correct_score_2_2_val": {
+          "raw": 13.0,
+          "fair_prob": 0.0769
+        },
+        "correct_score_2_3_val": {
+          "raw": 48.9,
+          "fair_prob": 0.0204
+        },
+        "correct_score_2_4_val": {
+          "raw": 165.0,
+          "fair_prob": 0.0061
+        },
+        "correct_score_3_0_val": {
+          "raw": 24.4,
+          "fair_prob": 0.041
+        },
+        "correct_score_3_1_val": {
+          "raw": 20.9,
+          "fair_prob": 0.0478
+        },
+        "correct_score_3_2_val": {
+          "raw": 35.8,
+          "fair_prob": 0.0279
+        },
+        "correct_score_3_3_val": {
+          "raw": 65.4,
+          "fair_prob": 0.0153
+        },
+        "correct_score_4_0_val": {
+          "raw": 69.7,
+          "fair_prob": 0.0143
+        },
+        "correct_score_4_1_val": {
+          "raw": 59.3,
+          "fair_prob": 0.0169
+        },
+        "correct_score_4_2_val": {
+          "raw": 100.0,
+          "fair_prob": 0.01
+        },
+        "correct_score_5_0_val": {
+          "raw": 244.0,
+          "fair_prob": 0.0041
+        },
+        "correct_score_5_1_val": {
+          "raw": 209.0,
+          "fair_prob": 0.0048
+        },
+        "correct_score_6_0_val": {
+          "raw": 1046.0,
+          "fair_prob": 0.001
+        }
+      },
+      "Correct Score (HT)": {
+        "ht_correct_score_0_0_val": {
+          "raw": 3.75,
+          "fair_prob": 0.2667
+        },
+        "ht_correct_score_0_1_val": {
+          "raw": 5.63,
+          "fair_prob": 0.1776
+        },
+        "ht_correct_score_0_2_val": {
+          "raw": 17.8,
+          "fair_prob": 0.0562
+        },
+        "ht_correct_score_0_3_val": {
+          "raw": 101.0,
+          "fair_prob": 0.0099
+        },
+        "ht_correct_score_1_0_val": {
+          "raw": 4.37,
+          "fair_prob": 0.2288
+        },
+        "ht_correct_score_1_1_val": {
+          "raw": 6.66,
+          "fair_prob": 0.1502
+        },
+        "ht_correct_score_1_2_val": {
+          "raw": 24.9,
+          "fair_prob": 0.0402
+        },
+        "ht_correct_score_2_0_val": {
+          "raw": 11.1,
+          "fair_prob": 0.0901
+        },
+        "ht_correct_score_2_1_val": {
+          "raw": 19.8,
+          "fair_prob": 0.0505
+        },
+        "ht_correct_score_3_0_val": {
+          "raw": 51.8,
+          "fair_prob": 0.0193
+        }
+      },
+      "1X2 (HT)": {
+        "ht_1x2_1_val": {
+          "raw": 2.68,
+          "fair_prob": 0.3731
+        },
+        "ht_1x2_x_val": {
+          "raw": 2.43,
+          "fair_prob": 0.4115
+        },
+        "ht_1x2_2_val": {
+          "raw": 3.67,
+          "fair_prob": 0.2725
+        }
+      },
+      "HT/FT": {
+        "ht_ft_1_1_val": {
+          "raw": 3.45,
+          "fair_prob": 0.2899
+        },
+        "ht_ft_1_x_val": {
+          "raw": 13.8,
+          "fair_prob": 0.0725
+        },
+        "ht_ft_1_2_val": {
+          "raw": 60.2,
+          "fair_prob": 0.0166
+        },
+        "ht_ft_x_1_val": {
+          "raw": 7.53,
+          "fair_prob": 0.1328
+        },
+        "ht_ft_x_x_val": {
+          "raw": 5.16,
+          "fair_prob": 0.1938
+        },
+        "ht_ft_x_2_val": {
+          "raw": 10.8,
+          "fair_prob": 0.0926
+        },
+        "ht_ft_2_1_val": {
+          "raw": 42.5,
+          "fair_prob": 0.0235
+        },
+        "ht_ft_2_x_val": {
+          "raw": 13.8,
+          "fair_prob": 0.0725
+        },
+        "ht_ft_2_2_val": {
+          "raw": 5.53,
+          "fair_prob": 0.1808
+        }
+      },
+      "1X2 + BTTS Combo": {
+        "1x2_gg_1_gg_val": {
+          "raw": 5.23,
+          "fair_prob": 0.1912
+        },
+        "1x2_gg_1_ng_val": {
+          "raw": 4.05,
+          "fair_prob": 0.2469
+        },
+        "1x2_gg_x_gg_val": {
+          "raw": 4.21,
+          "fair_prob": 0.2375
+        },
+        "1x2_gg_x_ng_val": {
+          "raw": 9.58,
+          "fair_prob": 0.1044
+        },
+        "1x2_gg_2_gg_val": {
+          "raw": 7.83,
+          "fair_prob": 0.1277
+        },
+        "1x2_gg_2_ng_val": {
+          "raw": 6.38,
+          "fair_prob": 0.1567
+        }
+      },
+      "1X2 + O/U 1.5 Combo": {
+        "1x2_o_u_1_5_1_ov_val": {
+          "raw": 2.94,
+          "fair_prob": 0.3401
+        },
+        "1x2_o_u_1_5_1_un_val": {
+          "raw": 8.11,
+          "fair_prob": 0.1233
+        },
+        "1x2_o_u_1_5_x_ov_val": {
+          "raw": 4.21,
+          "fair_prob": 0.2375
+        },
+        "1x2_o_u_1_5_x_un_val": {
+          "raw": 9.58,
+          "fair_prob": 0.1044
+        },
+        "1x2_o_u_1_5_2_ov_val": {
+          "raw": 4.73,
+          "fair_prob": 0.2114
+        },
+        "1x2_o_u_1_5_2_un_val": {
+          "raw": 11.1,
+          "fair_prob": 0.0901
+        }
+      },
+      "1X2 + O/U 2.5 Combo": {
+        "1x2_o_u_2_5_1_ov_val": {
+          "raw": 3.89,
+          "fair_prob": 0.2571
+        },
+        "1x2_o_u_2_5_1_un_val": {
+          "raw": 4.99,
+          "fair_prob": 0.2004
+        },
+        "1x2_o_u_2_5_x_ov_val": {
+          "raw": 11.4,
+          "fair_prob": 0.0877
+        },
+        "1x2_o_u_2_5_x_un_val": {
+          "raw": 3.86,
+          "fair_prob": 0.2591
+        },
+        "1x2_o_u_2_5_2_ov_val": {
+          "raw": 6.24,
+          "fair_prob": 0.1603
+        },
+        "1x2_o_u_2_5_2_un_val": {
+          "raw": 7.32,
+          "fair_prob": 0.1366
+        }
+      },
+      "Total Goals (Exact)": {
+        "total_goals_0_val": {
+          "raw": 9.58,
+          "fair_prob": 0.1044
+        },
+        "total_goals_1_val": {
+          "raw": 4.92,
+          "fair_prob": 0.2033
+        },
+        "total_goals_2_val": {
+          "raw": 3.53,
+          "fair_prob": 0.2833
+        },
+        "total_goals_3_val": {
+          "raw": 4.41,
+          "fair_prob": 0.2268
+        },
+        "total_goals_4_val": {
+          "raw": 6.05,
+          "fair_prob": 0.1653
+        },
+        "total_goals_5_val": {
+          "raw": 13.2,
+          "fair_prob": 0.0758
+        },
+        "total_goals_6_val": {
+          "raw": 26.7,
+          "fair_prob": 0.0375
+        }
+      }
+    },
+    "AST - BHA": {
+      "1X2": {
+        "1x2_1_val": {
+          "raw": 2.15,
+          "fair_prob": 0.4651
+        },
+        "1x2_x_val": {
+          "raw": 3.1,
+          "fair_prob": 0.3226
+        },
+        "1x2_2_val": {
+          "raw": 3.8,
+          "fair_prob": 0.2632
+        }
+      },
+      "Double Chance": {
+        "double_chance_1x_val": {
+          "raw": 1.24,
+          "fair_prob": 0.8065
+        },
+        "double_chance_12_val": {
+          "raw": 1.34,
+          "fair_prob": 0.7463
+        },
+        "double_chance_x2_val": {
+          "raw": 1.66,
+          "fair_prob": 0.6024
+        }
+      },
+      "BTTS (GG/NG)": {
+        "gg_ng_gg_val": {
+          "raw": 1.68,
+          "fair_prob": 0.5952
+        },
+        "gg_ng_ng_val": {
+          "raw": 2.18,
+          "fair_prob": 0.4587
+        }
+      },
+      "Total O/U 1.5": {
+        "o_u_1_5_ov_val": {
+          "raw": 1.24,
+          "fair_prob": 0.8065
+        },
+        "o_u_1_5_un_val": {
+          "raw": 4.01,
+          "fair_prob": 0.2494
+        }
+      },
+      "Total O/U 2.5": {
+        "o_u_2_5_ov_val": {
+          "raw": 1.83,
+          "fair_prob": 0.5464
+        },
+        "o_u_2_5_un_val": {
+          "raw": 1.97,
+          "fair_prob": 0.5076
+        }
+      },
+      "Total O/U 3.5": {
+        "o_u_3_5_ov_val": {
+          "raw": 3.08,
+          "fair_prob": 0.3247
+        },
+        "o_u_3_5_un_val": {
+          "raw": 1.36,
+          "fair_prob": 0.7353
+        }
+      },
+      "Total O/U 4.5": {
+        "o_u_4_5_ov_val": {
+          "raw": 7.07,
+          "fair_prob": 0.1414
+        },
+        "o_u_4_5_un_val": {
+          "raw": 1.08,
+          "fair_prob": 0.9259
+        }
+      },
+      "Home O/U 0.5": {
+        "home_o_u_0_5_ov_val": {
+          "raw": 1.19,
+          "fair_prob": 0.8403
+        },
+        "home_o_u_0_5_un_val": {
+          "raw": 4.65,
+          "fair_prob": 0.2151
+        }
+      },
+      "Home O/U 1.5": {
+        "home_o_u_1_5_ov_val": {
+          "raw": 2.0,
+          "fair_prob": 0.5
+        },
+        "home_o_u_1_5_un_val": {
+          "raw": 1.79,
+          "fair_prob": 0.5587
+        }
+      },
+      "Home O/U 2.5": {
+        "home_o_u_2_5_ov_val": {
+          "raw": 4.74,
+          "fair_prob": 0.211
+        },
+        "home_o_u_2_5_un_val": {
+          "raw": 1.19,
+          "fair_prob": 0.8403
+        }
+      },
+      "Home O/U 3.5": {
+        "home_o_u_3_5_ov_val": {
+          "raw": 15.3,
+          "fair_prob": 0.0654
+        },
+        "home_o_u_3_5_un_val": {
+          "raw": 1.08,
+          "fair_prob": 0.874
+        }
+      },
+      "Away O/U 0.5": {
+        "away_o_u_0_5_ov_val": {
+          "raw": 1.37,
+          "fair_prob": 0.7299
+        },
+        "away_o_u_0_5_un_val": {
+          "raw": 3.08,
+          "fair_prob": 0.3247
+        }
+      },
+      "Away O/U 1.5": {
+        "away_o_u_1_5_ov_val": {
+          "raw": 2.88,
+          "fair_prob": 0.3472
+        },
+        "away_o_u_1_5_un_val": {
+          "raw": 1.41,
+          "fair_prob": 0.7092
+        }
+      },
+      "Away O/U 2.5": {
+        "away_o_u_2_5_ov_val": {
+          "raw": 9.03,
+          "fair_prob": 0.1107
+        },
+        "away_o_u_2_5_un_val": {
+          "raw": 1.05,
+          "fair_prob": 0.9524
+        }
+      },
+      "Away O/U 3.5": {
+        "away_o_u_3_5_ov_val": {
+          "raw": 40.5,
+          "fair_prob": 0.0247
+        },
+        "away_o_u_3_5_un_val": {
+          "raw": null,
+          "fair_prob": null
+        }
+      },
+      "Clean Sheet (Home)": {
+        "home_clean_sheet_yes_val": {
+          "raw": 3.08,
+          "fair_prob": 0.3247
+        },
+        "home_clean_sheet_no_val": {
+          "raw": 1.37,
+          "fair_prob": 0.7299
+        }
+      },
+      "Clean Sheet (Away)": {
+        "away_clean_sheet_yes_val": {
+          "raw": 4.65,
+          "fair_prob": 0.2151
+        },
+        "away_clean_sheet_no_val": {
+          "raw": 1.19,
+          "fair_prob": 0.8403
+        }
+      },
+      "Both Team to score In First Halves": {
+        "goal_goal_ht_yes_val": {
+          "raw": 3.79,
+          "fair_prob": 0.2639
+        },
+        "goal_goal_ht_no_val": {
+          "raw": 1.26,
+          "fair_prob": 0.7937
+        }
+      },
+      "Correct Score (FT)": {
+        "correct_score_0_0_val": {
+          "raw": 11.7,
+          "fair_prob": 0.0855
+        },
+        "correct_score_0_1_val": {
+          "raw": 13.8,
+          "fair_prob": 0.0725
+        },
+        "correct_score_0_2_val": {
+          "raw": 21.9,
+          "fair_prob": 0.0457
+        },
+        "correct_score_0_3_val": {
+          "raw": 53.4,
+          "fair_prob": 0.0187
+        },
+        "correct_score_0_4_val": {
+          "raw": 171.0,
+          "fair_prob": 0.0058
+        },
+        "correct_score_0_5_val": {
+          "raw": 688.0,
+          "fair_prob": 0.0015
+        },
+        "correct_score_0_6_val": {
+          "raw": 3271.0,
+          "fair_prob": 0.0003
+        },
+        "correct_score_1_0_val": {
+          "raw": 9.25,
+          "fair_prob": 0.1081
+        },
+        "correct_score_1_1_val": {
+          "raw": 6.62,
+          "fair_prob": 0.1511
+        },
+        "correct_score_1_2_val": {
+          "raw": 13.8,
+          "fair_prob": 0.0725
+        },
+        "correct_score_1_3_val": {
+          "raw": 33.5,
+          "fair_prob": 0.0299
+        },
+        "correct_score_1_4_val": {
+          "raw": 107.0,
+          "fair_prob": 0.0093
+        },
+        "correct_score_1_5_val": {
+          "raw": 430.0,
+          "fair_prob": 0.0023
+        },
+        "correct_score_2_0_val": {
+          "raw": 11.6,
+          "fair_prob": 0.0862
+        },
+        "correct_score_2_1_val": {
+          "raw": 9.25,
+          "fair_prob": 0.1081
+        },
+        "correct_score_2_2_val": {
+          "raw": 11.1,
+          "fair_prob": 0.0901
+        },
+        "correct_score_2_3_val": {
+          "raw": 42.1,
+          "fair_prob": 0.0238
+        },
+        "correct_score_2_4_val": {
+          "raw": 138.0,
+          "fair_prob": 0.0072
+        },
+        "correct_score_3_0_val": {
+          "raw": 21.9,
+          "fair_prob": 0.0457
+        },
+        "correct_score_3_1_val": {
+          "raw": 17.6,
+          "fair_prob": 0.0568
+        },
+        "correct_score_3_2_val": {
+          "raw": 28.4,
+          "fair_prob": 0.0352
+        },
+        "correct_score_3_3_val": {
+          "raw": 46.4,
+          "fair_prob": 0.0216
+        },
+        "correct_score_4_0_val": {
+          "raw": 55.1,
+          "fair_prob": 0.0181
+        },
+        "correct_score_4_1_val": {
+          "raw": 43.8,
+          "fair_prob": 0.0228
+        },
+        "correct_score_4_2_val": {
+          "raw": 68.8,
+          "fair_prob": 0.0145
+        },
+        "correct_score_5_0_val": {
+          "raw": 171.0,
+          "fair_prob": 0.0058
+        },
+        "correct_score_5_1_val": {
+          "raw": 138.0,
+          "fair_prob": 0.0072
+        },
+        "correct_score_6_0_val": {
+          "raw": 645.0,
+          "fair_prob": 0.0016
+        }
+      },
+      "Correct Score (HT)": {
+        "ht_correct_score_0_0_val": {
+          "raw": 4.35,
+          "fair_prob": 0.2299
+        },
+        "ht_correct_score_0_1_val": {
+          "raw": 6.07,
+          "fair_prob": 0.1647
+        },
+        "ht_correct_score_0_2_val": {
+          "raw": 17.8,
+          "fair_prob": 0.0562
+        },
+        "ht_correct_score_0_3_val": {
+          "raw": 92.3,
+          "fair_prob": 0.0108
+        },
+        "ht_correct_score_1_0_val": {
+          "raw": 4.42,
+          "fair_prob": 0.2262
+        },
+        "ht_correct_score_1_1_val": {
+          "raw": 6.16,
+          "fair_prob": 0.1623
+        },
+        "ht_correct_score_1_2_val": {
+          "raw": 20.8,
+          "fair_prob": 0.0481
+        },
+        "ht_correct_score_2_0_val": {
+          "raw": 9.81,
+          "fair_prob": 0.1019
+        },
+        "ht_correct_score_2_1_val": {
+          "raw": 15.5,
+          "fair_prob": 0.0645
+        },
+        "ht_correct_score_3_0_val": {
+          "raw": 38.6,
+          "fair_prob": 0.0259
+        }
+      },
+      "1X2 (HT)": {
+        "ht_1x2_1_val": {
+          "raw": 2.49,
+          "fair_prob": 0.4016
+        },
+        "ht_1x2_x_val": {
+          "raw": 2.59,
+          "fair_prob": 0.3861
+        },
+        "ht_1x2_2_val": {
+          "raw": 3.72,
+          "fair_prob": 0.2688
+        }
+      },
+      "HT/FT": {
+        "ht_ft_1_1_val": {
+          "raw": 3.19,
+          "fair_prob": 0.3135
+        },
+        "ht_ft_1_x_val": {
+          "raw": 12.9,
+          "fair_prob": 0.0775
+        },
+        "ht_ft_1_2_val": {
+          "raw": 57.9,
+          "fair_prob": 0.0173
+        },
+        "ht_ft_x_1_val": {
+          "raw": 7.5,
+          "fair_prob": 0.1333
+        },
+        "ht_ft_x_x_val": {
+          "raw": 5.67,
+          "fair_prob": 0.1764
+        },
+        "ht_ft_x_2_val": {
+          "raw": 12.0,
+          "fair_prob": 0.0833
+        },
+        "ht_ft_2_1_val": {
+          "raw": 37.1,
+          "fair_prob": 0.027
+        },
+        "ht_ft_2_x_val": {
+          "raw": 12.9,
+          "fair_prob": 0.0775
+        },
+        "ht_ft_2_2_val": {
+          "raw": 5.93,
+          "fair_prob": 0.1686
+        }
+      },
+      "1X2 + BTTS Combo": {
+        "1x2_gg_1_gg_val": {
+          "raw": 4.47,
+          "fair_prob": 0.2237
+        },
+        "1x2_gg_1_ng_val": {
+          "raw": 4.13,
+          "fair_prob": 0.2421
+        },
+        "1x2_gg_x_gg_val": {
+          "raw": 4.0,
+          "fair_prob": 0.25
+        },
+        "1x2_gg_x_ng_val": {
+          "raw": 11.7,
+          "fair_prob": 0.0855
+        },
+        "1x2_gg_2_gg_val": {
+          "raw": 7.55,
+          "fair_prob": 0.1325
+        },
+        "1x2_gg_2_ng_val": {
+          "raw": 7.58,
+          "fair_prob": 0.1319
+        }
+      },
+      "1X2 + O/U 1.5 Combo": {
+        "1x2_o_u_1_5_1_ov_val": {
+          "raw": 2.61,
+          "fair_prob": 0.3831
+        },
+        "1x2_o_u_1_5_1_un_val": {
+          "raw": 9.25,
+          "fair_prob": 0.1081
+        },
+        "1x2_o_u_1_5_x_ov_val": {
+          "raw": 4.0,
+          "fair_prob": 0.25
+        },
+        "1x2_o_u_1_5_x_un_val": {
+          "raw": 11.7,
+          "fair_prob": 0.0855
+        },
+        "1x2_o_u_1_5_2_ov_val": {
+          "raw": 4.84,
+          "fair_prob": 0.2066
+        },
+        "1x2_o_u_1_5_2_un_val": {
+          "raw": 13.8,
+          "fair_prob": 0.0725
+        }
+      },
+      "1X2 + O/U 2.5 Combo": {
+        "1x2_o_u_2_5_1_ov_val": {
+          "raw": 3.32,
+          "fair_prob": 0.3012
+        },
+        "1x2_o_u_2_5_1_un_val": {
+          "raw": 5.41,
+          "fair_prob": 0.1848
+        },
+        "1x2_o_u_2_5_x_ov_val": {
+          "raw": 9.42,
+          "fair_prob": 0.1062
+        },
+        "1x2_o_u_2_5_x_un_val": {
+          "raw": 4.29,
+          "fair_prob": 0.2331
+        },
+        "1x2_o_u_2_5_2_ov_val": {
+          "raw": 6.12,
+          "fair_prob": 0.1634
+        },
+        "1x2_o_u_2_5_2_un_val": {
+          "raw": 8.89,
+          "fair_prob": 0.1125
+        }
+      },
+      "Total Goals (Exact)": {
+        "total_goals_0_val": {
+          "raw": 11.7,
+          "fair_prob": 0.0855
+        },
+        "total_goals_1_val": {
+          "raw": 5.8,
+          "fair_prob": 0.1724
+        },
+        "total_goals_2_val": {
+          "raw": 3.71,
+          "fair_prob": 0.2695
+        },
+        "total_goals_3_val": {
+          "raw": 4.28,
+          "fair_prob": 0.2336
+        },
+        "total_goals_4_val": {
+          "raw": 5.24,
+          "fair_prob": 0.1908
+        },
+        "total_goals_5_val": {
+          "raw": 10.6,
+          "fair_prob": 0.0943
+        },
+        "total_goals_6_val": {
+          "raw": 19.1,
+          "fair_prob": 0.0524
+        }
+      }
+    }
+  },
+  "league_es": {
+    "BAR - RSO": {
+      "1X2": {
+        "1x2_1_val": {
+          "raw": 1.41,
+          "fair_prob": 0.7092
+        },
+        "1x2_x_val": {
+          "raw": 4.22,
+          "fair_prob": 0.237
+        },
+        "1x2_2_val": {
+          "raw": 9.22,
+          "fair_prob": 0.1085
+        }
+      },
+      "Double Chance": {
+        "double_chance_1x_val": {
+          "raw": 1.03,
+          "fair_prob": 0.9709
+        },
+        "double_chance_12_val": {
+          "raw": 1.2,
+          "fair_prob": 0.8333
+        },
+        "double_chance_x2_val": {
+          "raw": 2.83,
+          "fair_prob": 0.3534
+        }
+      },
+      "BTTS (GG/NG)": {
+        "gg_ng_gg_val": {
+          "raw": 1.81,
+          "fair_prob": 0.5525
+        },
+        "gg_ng_ng_val": {
+          "raw": 2.0,
+          "fair_prob": 0.5
+        }
+      },
+      "Total O/U 1.5": {
+        "o_u_1_5_ov_val": {
+          "raw": 1.16,
+          "fair_prob": 0.8621
+        },
+        "o_u_1_5_un_val": {
+          "raw": 5.16,
+          "fair_prob": 0.1938
+        }
+      },
+      "Total O/U 2.5": {
+        "o_u_2_5_ov_val": {
+          "raw": 1.63,
+          "fair_prob": 0.6135
+        },
+        "o_u_2_5_un_val": {
+          "raw": 2.28,
+          "fair_prob": 0.4386
+        }
+      },
+      "Total O/U 3.5": {
+        "o_u_3_5_ov_val": {
+          "raw": 2.63,
+          "fair_prob": 0.3802
+        },
+        "o_u_3_5_un_val": {
+          "raw": 1.5,
+          "fair_prob": 0.6667
+        }
+      },
+      "Total O/U 4.5": {
+        "o_u_4_5_ov_val": {
+          "raw": 5.45,
+          "fair_prob": 0.1835
+        },
+        "o_u_4_5_un_val": {
+          "raw": 1.16,
+          "fair_prob": 0.8621
+        }
+      },
+      "Home O/U 0.5": {
+        "home_o_u_0_5_ov_val": {
+          "raw": 1.05,
+          "fair_prob": 0.9524
+        },
+        "home_o_u_0_5_un_val": {
+          "raw": 9.38,
+          "fair_prob": 0.1066
+        }
+      },
+      "Home O/U 1.5": {
+        "home_o_u_1_5_ov_val": {
+          "raw": 1.46,
+          "fair_prob": 0.6849
+        },
+        "home_o_u_1_5_un_val": {
+          "raw": 2.71,
+          "fair_prob": 0.369
+        }
+      },
+      "Home O/U 2.5": {
+        "home_o_u_2_5_ov_val": {
+          "raw": 2.59,
+          "fair_prob": 0.3861
+        },
+        "home_o_u_2_5_un_val": {
+          "raw": 1.51,
+          "fair_prob": 0.6623
+        }
+      },
+      "Home O/U 3.5": {
+        "home_o_u_3_5_ov_val": {
+          "raw": 5.97,
+          "fair_prob": 0.1675
+        },
+        "home_o_u_3_5_un_val": {
+          "raw": 1.13,
+          "fair_prob": 0.885
+        }
+      },
+      "Away O/U 0.5": {
+        "away_o_u_0_5_ov_val": {
+          "raw": 1.65,
+          "fair_prob": 0.6061
+        },
+        "away_o_u_0_5_un_val": {
+          "raw": 2.23,
+          "fair_prob": 0.4484
+        }
+      },
+      "Away O/U 1.5": {
+        "away_o_u_1_5_ov_val": {
+          "raw": 4.87,
+          "fair_prob": 0.2053
+        },
+        "away_o_u_1_5_un_val": {
+          "raw": 1.18,
+          "fair_prob": 0.8475
+        }
+      },
+      "Away O/U 2.5": {
+        "away_o_u_2_5_ov_val": {
+          "raw": 22.3,
+          "fair_prob": 0.0448
+        },
+        "away_o_u_2_5_un_val": {
+          "raw": null,
+          "fair_prob": null
+        }
+      },
+      "Away O/U 3.5": {
+        "away_o_u_3_5_ov_val": {
+          "raw": 144.0,
+          "fair_prob": 0.0069
+        },
+        "away_o_u_3_5_un_val": {
+          "raw": null,
+          "fair_prob": null
+        }
+      },
+      "Clean Sheet (Home)": {
+        "home_clean_sheet_yes_val": {
+          "raw": 2.23,
+          "fair_prob": 0.4484
+        },
+        "home_clean_sheet_no_val": {
+          "raw": 1.65,
+          "fair_prob": 0.6061
+        }
+      },
+      "Clean Sheet (Away)": {
+        "away_clean_sheet_yes_val": {
+          "raw": 9.38,
+          "fair_prob": 0.1066
+        },
+        "away_clean_sheet_no_val": {
+          "raw": 1.05,
+          "fair_prob": 0.9524
+        }
+      },
+      "Both Team to score In First Halves": {
+        "goal_goal_ht_yes_val": {
+          "raw": 3.88,
+          "fair_prob": 0.2577
+        },
+        "goal_goal_ht_no_val": {
+          "raw": 1.25,
+          "fair_prob": 0.8
+        }
+      },
+      "Correct Score (FT)": {
+        "correct_score_0_0_val": {
+          "raw": 18.0,
+          "fair_prob": 0.0556
+        },
+        "correct_score_0_1_val": {
+          "raw": 29.1,
+          "fair_prob": 0.0344
+        },
+        "correct_score_0_2_val": {
+          "raw": 63.8,
+          "fair_prob": 0.0157
+        },
+        "correct_score_0_3_val": {
+          "raw": 206.0,
+          "fair_prob": 0.0049
+        },
+        "correct_score_0_4_val": {
+          "raw": 842.0,
+          "fair_prob": 0.0012
+        },
+        "correct_score_0_5_val": {
+          "raw": 3220.0,
+          "fair_prob": 0.0003
+        },
+        "correct_score_0_6_val": {
+          "raw": 6910.0,
+          "fair_prob": 0.0001
+        },
+        "correct_score_1_0_val": {
+          "raw": 8.46,
+          "fair_prob": 0.1182
+        },
+        "correct_score_1_1_val": {
+          "raw": 8.12,
+          "fair_prob": 0.1232
+        },
+        "correct_score_1_2_val": {
+          "raw": 28.9,
+          "fair_prob": 0.0346
+        },
+        "correct_score_1_3_val": {
+          "raw": 94.5,
+          "fair_prob": 0.0106
+        },
+        "correct_score_1_4_val": {
+          "raw": 401.0,
+          "fair_prob": 0.0025
+        },
+        "correct_score_1_5_val": {
+          "raw": 1820.0,
+          "fair_prob": 0.0005
+        },
+        "correct_score_2_0_val": {
+          "raw": 7.62,
+          "fair_prob": 0.1312
+        },
+        "correct_score_2_1_val": {
+          "raw": 8.38,
+          "fair_prob": 0.1193
+        },
+        "correct_score_2_2_val": {
+          "raw": 16.0,
+          "fair_prob": 0.0625
+        },
+        "correct_score_2_3_val": {
+          "raw": 85.3,
+          "fair_prob": 0.0117
+        },
+        "correct_score_2_4_val": {
+          "raw": 363.0,
+          "fair_prob": 0.0028
+        },
+        "correct_score_3_0_val": {
+          "raw": 10.3,
+          "fair_prob": 0.0971
+        },
+        "correct_score_3_1_val": {
+          "raw": 11.3,
+          "fair_prob": 0.0885
+        },
+        "correct_score_3_2_val": {
+          "raw": 24.8,
+          "fair_prob": 0.0403
+        },
+        "correct_score_3_3_val": {
+          "raw": 71.3,
+          "fair_prob": 0.014
+        },
+        "correct_score_4_0_val": {
+          "raw": 18.6,
+          "fair_prob": 0.0538
+        },
+        "correct_score_4_1_val": {
+          "raw": 20.3,
+          "fair_prob": 0.0493
+        },
+        "correct_score_4_2_val": {
+          "raw": 44.7,
+          "fair_prob": 0.0224
+        },
+        "correct_score_5_0_val": {
+          "raw": 41.7,
+          "fair_prob": 0.024
+        },
+        "correct_score_5_1_val": {
+          "raw": 45.8,
+          "fair_prob": 0.0218
+        },
+        "correct_score_6_0_val": {
+          "raw": 112.0,
+          "fair_prob": 0.0089
+        }
+      },
+      "Correct Score (HT)": {
+        "ht_correct_score_0_0_val": {
+          "raw": 5.29,
+          "fair_prob": 0.189
+        },
+        "ht_correct_score_0_1_val": {
+          "raw": 19.3,
+          "fair_prob": 0.0518
+        },
+        "ht_correct_score_0_2_val": {
+          "raw": 101.0,
+          "fair_prob": 0.0099
+        },
+        "ht_correct_score_0_3_val": {
+          "raw": 985.0,
+          "fair_prob": 0.001
+        },
+        "ht_correct_score_1_0_val": {
+          "raw": 3.7,
+          "fair_prob": 0.2703
+        },
+        "ht_correct_score_1_1_val": {
+          "raw": 6.71,
+          "fair_prob": 0.149
+        },
+        "ht_correct_score_1_2_val": {
+          "raw": 60.6,
+          "fair_prob": 0.0165
+        },
+        "ht_correct_score_2_0_val": {
+          "raw": 4.79,
+          "fair_prob": 0.2088
+        },
+        "ht_correct_score_2_1_val": {
+          "raw": 9.72,
+          "fair_prob": 0.1029
+        },
+        "ht_correct_score_3_0_val": {
+          "raw": 9.86,
+          "fair_prob": 0.1014
+        }
+      },
+      "1X2 (HT)": {
+        "ht_1x2_1_val": {
+          "raw": 1.52,
+          "fair_prob": 0.6579
+        },
+        "ht_1x2_x_val": {
+          "raw": 3.09,
+          "fair_prob": 0.3236
+        },
+        "ht_1x2_2_val": {
+          "raw": 13.1,
+          "fair_prob": 0.0763
+        }
+      },
+      "HT/FT": {
+        "ht_ft_1_1_val": {
+          "raw": 1.76,
+          "fair_prob": 0.5682
+        },
+        "ht_ft_1_x_val": {
+          "raw": 12.3,
+          "fair_prob": 0.0813
+        },
+        "ht_ft_1_2_val": {
+          "raw": 50.4,
+          "fair_prob": 0.0198
+        },
+        "ht_ft_x_1_val": {
+          "raw": 7.27,
+          "fair_prob": 0.1376
+        },
+        "ht_ft_x_x_val": {
+          "raw": 7.1,
+          "fair_prob": 0.1408
+        },
+        "ht_ft_x_2_val": {
+          "raw": 19.4,
+          "fair_prob": 0.0515
+        },
+        "ht_ft_2_1_val": {
+          "raw": 58.2,
+          "fair_prob": 0.0172
+        },
+        "ht_ft_2_x_val": {
+          "raw": 48.6,
+          "fair_prob": 0.0206
+        },
+        "ht_ft_2_2_val": {
+          "raw": 25.3,
+          "fair_prob": 0.0395
+        }
+      },
+      "1X2 + BTTS Combo": {
+        "1x2_gg_1_gg_val": {
+          "raw": 3.2,
+          "fair_prob": 0.3125
+        },
+        "1x2_gg_1_ng_val": {
+          "raw": 2.52,
+          "fair_prob": 0.3968
+        },
+        "1x2_gg_x_gg_val": {
+          "raw": 5.48,
+          "fair_prob": 0.1825
+        },
+        "1x2_gg_x_ng_val": {
+          "raw": 17.9,
+          "fair_prob": 0.0559
+        },
+        "1x2_gg_2_gg_val": {
+          "raw": 17.4,
+          "fair_prob": 0.0575
+        },
+        "1x2_gg_2_ng_val": {
+          "raw": 19.3,
+          "fair_prob": 0.0518
+        }
+      },
+      "1X2 + O/U 1.5 Combo": {
+        "1x2_o_u_1_5_1_ov_val": {
+          "raw": 1.59,
+          "fair_prob": 0.6289
+        },
+        "1x2_o_u_1_5_1_un_val": {
+          "raw": 8.87,
+          "fair_prob": 0.1127
+        },
+        "1x2_o_u_1_5_x_ov_val": {
+          "raw": 5.25,
+          "fair_prob": 0.1905
+        },
+        "1x2_o_u_1_5_x_un_val": {
+          "raw": 17.1,
+          "fair_prob": 0.0585
+        },
+        "1x2_o_u_1_5_2_ov_val": {
+          "raw": 12.3,
+          "fair_prob": 0.0813
+        },
+        "1x2_o_u_1_5_2_un_val": {
+          "raw": 30.5,
+          "fair_prob": 0.0328
+        }
+      },
+      "1X2 + O/U 2.5 Combo": {
+        "1x2_o_u_2_5_1_ov_val": {
+          "raw": 1.99,
+          "fair_prob": 0.5025
+        },
+        "1x2_o_u_2_5_1_un_val": {
+          "raw": 4.2,
+          "fair_prob": 0.2381
+        },
+        "1x2_o_u_2_5_x_ov_val": {
+          "raw": 13.7,
+          "fair_prob": 0.073
+        },
+        "1x2_o_u_2_5_x_un_val": {
+          "raw": 5.69,
+          "fair_prob": 0.1757
+        },
+        "1x2_o_u_2_5_2_ov_val": {
+          "raw": 15.1,
+          "fair_prob": 0.0662
+        },
+        "1x2_o_u_2_5_2_un_val": {
+          "raw": 20.9,
+          "fair_prob": 0.0478
+        }
+      },
+      "Total Goals (Exact)": {
+        "total_goals_0_val": {
+          "raw": 18.0,
+          "fair_prob": 0.0556
+        },
+        "total_goals_1_val": {
+          "raw": 6.87,
+          "fair_prob": 0.1456
+        },
+        "total_goals_2_val": {
+          "raw": 3.88,
+          "fair_prob": 0.2577
+        },
+        "total_goals_3_val": {
+          "raw": 4.1,
+          "fair_prob": 0.2439
+        },
+        "total_goals_4_val": {
+          "raw": 4.85,
+          "fair_prob": 0.2062
+        },
+        "total_goals_5_val": {
+          "raw": 8.2,
+          "fair_prob": 0.122
+        },
+        "total_goals_6_val": {
+          "raw": 14.8,
+          "fair_prob": 0.0676
+        }
+      }
+    },
+    "OSA - ATM": {
+      "1X2": {
+        "1x2_1_val": {
+          "raw": 4.58,
+          "fair_prob": 0.2183
+        },
+        "1x2_x_val": {
+          "raw": 3.36,
+          "fair_prob": 0.2976
+        },
+        "1x2_2_val": {
+          "raw": 1.87,
+          "fair_prob": 0.5348
+        }
+      },
+      "Double Chance": {
+        "double_chance_1x_val": {
+          "raw": 1.89,
+          "fair_prob": 0.5291
+        },
+        "double_chance_12_val": {
+          "raw": 1.3,
+          "fair_prob": 0.7692
+        },
+        "double_chance_x2_val": {
+          "raw": 1.17,
+          "fair_prob": 0.8547
+        }
+      },
+      "BTTS (GG/NG)": {
+        "gg_ng_gg_val": {
+          "raw": 2.08,
+          "fair_prob": 0.4808
+        },
+        "gg_ng_ng_val": {
+          "raw": 1.75,
+          "fair_prob": 0.5714
+        }
+      },
+      "Total O/U 1.5": {
+        "o_u_1_5_ov_val": {
+          "raw": 1.38,
+          "fair_prob": 0.7246
+        },
+        "o_u_1_5_un_val": {
+          "raw": 3.02,
+          "fair_prob": 0.3311
+        }
+      },
+      "Total O/U 2.5": {
+        "o_u_2_5_ov_val": {
+          "raw": 2.3,
+          "fair_prob": 0.4348
+        },
+        "o_u_2_5_un_val": {
+          "raw": 1.62,
+          "fair_prob": 0.6173
+        }
+      },
+      "Total O/U 3.5": {
+        "o_u_3_5_ov_val": {
+          "raw": 4.53,
+          "fair_prob": 0.2208
+        },
+        "o_u_3_5_un_val": {
+          "raw": 1.21,
+          "fair_prob": 0.8264
+        }
+      },
+      "Total O/U 4.5": {
+        "o_u_4_5_ov_val": {
+          "raw": 11.3,
+          "fair_prob": 0.0885
+        },
+        "o_u_4_5_un_val": {
+          "raw": 1.04,
+          "fair_prob": 0.9615
+        }
+      },
+      "Home O/U 0.5": {
+        "home_o_u_0_5_ov_val": {
+          "raw": 1.63,
+          "fair_prob": 0.6135
+        },
+        "home_o_u_0_5_un_val": {
+          "raw": 2.27,
+          "fair_prob": 0.4405
+        }
+      },
+      "Home O/U 1.5": {
+        "home_o_u_1_5_ov_val": {
+          "raw": 4.5,
+          "fair_prob": 0.2222
+        },
+        "home_o_u_1_5_un_val": {
+          "raw": 1.21,
+          "fair_prob": 0.8264
+        }
+      },
+      "Home O/U 2.5": {
+        "home_o_u_2_5_ov_val": {
+          "raw": 17.8,
+          "fair_prob": 0.0562
+        },
+        "home_o_u_2_5_un_val": {
+          "raw": null,
+          "fair_prob": null
+        }
+      },
+      "Home O/U 3.5": {
+        "home_o_u_3_5_ov_val": {
+          "raw": 95.5,
+          "fair_prob": 0.0105
+        },
+        "home_o_u_3_5_un_val": {
+          "raw": null,
+          "fair_prob": null
+        }
+      },
+      "Away O/U 0.5": {
+        "away_o_u_0_5_ov_val": {
+          "raw": 1.21,
+          "fair_prob": 0.8264
+        },
+        "away_o_u_0_5_un_val": {
+          "raw": 4.26,
+          "fair_prob": 0.2347
+        }
+      },
+      "Away O/U 1.5": {
+        "away_o_u_1_5_ov_val": {
+          "raw": 2.18,
+          "fair_prob": 0.4587
+        },
+        "away_o_u_1_5_un_val": {
+          "raw": 1.68,
+          "fair_prob": 0.5952
+        }
+      },
+      "Away O/U 2.5": {
+        "away_o_u_2_5_ov_val": {
+          "raw": 5.24,
+          "fair_prob": 0.1908
+        },
+        "away_o_u_2_5_un_val": {
+          "raw": 1.17,
+          "fair_prob": 0.8547
+        }
+      },
+      "Away O/U 3.5": {
+        "away_o_u_3_5_ov_val": {
+          "raw": 16.6,
+          "fair_prob": 0.0602
+        },
+        "away_o_u_3_5_un_val": {
+          "raw": null,
+          "fair_prob": null
+        }
+      },
+      "Clean Sheet (Home)": {
+        "home_clean_sheet_yes_val": {
+          "raw": 4.26,
+          "fair_prob": 0.2347
+        },
+        "home_clean_sheet_no_val": {
+          "raw": 1.21,
+          "fair_prob": 0.8264
+        }
+      },
+      "Clean Sheet (Away)": {
+        "away_clean_sheet_yes_val": {
+          "raw": 2.27,
+          "fair_prob": 0.4405
+        },
+        "away_clean_sheet_no_val": {
+          "raw": 1.63,
+          "fair_prob": 0.6135
+        }
+      },
+      "Both Team to score In First Halves": {
+        "goal_goal_ht_yes_val": {
+          "raw": 4.9,
+          "fair_prob": 0.2041
+        },
+        "goal_goal_ht_no_val": {
+          "raw": 1.17,
+          "fair_prob": 0.8547
+        }
+      },
+      "Correct Score (FT)": {
+        "correct_score_0_0_val": {
+          "raw": 9.52,
+          "fair_prob": 0.105
+        },
+        "correct_score_0_1_val": {
+          "raw": 6.2,
+          "fair_prob": 0.1613
+        },
+        "correct_score_0_2_val": {
+          "raw": 8.36,
+          "fair_prob": 0.1196
+        },
+        "correct_score_0_3_val": {
+          "raw": 16.9,
+          "fair_prob": 0.0592
+        },
+        "correct_score_0_4_val": {
+          "raw": 45.6,
+          "fair_prob": 0.0219
+        },
+        "correct_score_0_5_val": {
+          "raw": 152.0,
+          "fair_prob": 0.0066
+        },
+        "correct_score_0_6_val": {
+          "raw": 584.0,
+          "fair_prob": 0.0017
+        },
+        "correct_score_1_0_val": {
+          "raw": 11.3,
+          "fair_prob": 0.0885
+        },
+        "correct_score_1_1_val": {
+          "raw": 6.53,
+          "fair_prob": 0.1531
+        },
+        "correct_score_1_2_val": {
+          "raw": 9.39,
+          "fair_prob": 0.1065
+        },
+        "correct_score_1_3_val": {
+          "raw": 19.0,
+          "fair_prob": 0.0526
+        },
+        "correct_score_1_4_val": {
+          "raw": 51.0,
+          "fair_prob": 0.0196
+        },
+        "correct_score_1_5_val": {
+          "raw": 169.0,
+          "fair_prob": 0.0059
+        },
+        "correct_score_2_0_val": {
+          "raw": 25.3,
+          "fair_prob": 0.0395
+        },
+        "correct_score_2_1_val": {
+          "raw": 17.0,
+          "fair_prob": 0.0588
+        },
+        "correct_score_2_2_val": {
+          "raw": 19.7,
+          "fair_prob": 0.0508
+        },
+        "correct_score_2_3_val": {
+          "raw": 42.4,
+          "fair_prob": 0.0236
+        },
+        "correct_score_2_4_val": {
+          "raw": 113.0,
+          "fair_prob": 0.0088
+        },
+        "correct_score_3_0_val": {
+          "raw": 84.7,
+          "fair_prob": 0.0118
+        },
+        "correct_score_3_1_val": {
+          "raw": 57.2,
+          "fair_prob": 0.0175
+        },
+        "correct_score_3_2_val": {
+          "raw": 77.2,
+          "fair_prob": 0.013
+        },
+        "correct_score_3_3_val": {
+          "raw": 133.0,
+          "fair_prob": 0.0075
+        },
+        "correct_score_4_0_val": {
+          "raw": 367.0,
+          "fair_prob": 0.0027
+        },
+        "correct_score_4_1_val": {
+          "raw": 251.0,
+          "fair_prob": 0.004
+        },
+        "correct_score_4_2_val": {
+          "raw": 336.0,
+          "fair_prob": 0.003
+        },
+        "correct_score_5_0_val": {
+          "raw": 1720.0,
+          "fair_prob": 0.0006
+        },
+        "correct_score_5_1_val": {
+          "raw": 1240.0,
+          "fair_prob": 0.0008
+        },
+        "correct_score_6_0_val": {
+          "raw": 5430.0,
+          "fair_prob": 0.0002
+        }
+      },
+      "Correct Score (HT)": {
+        "ht_correct_score_0_0_val": {
+          "raw": 3.14,
+          "fair_prob": 0.3185
+        },
+        "ht_correct_score_0_1_val": {
+          "raw": 3.59,
+          "fair_prob": 0.2786
+        },
+        "ht_correct_score_0_2_val": {
+          "raw": 8.54,
+          "fair_prob": 0.1171
+        },
+        "ht_correct_score_0_3_val": {
+          "raw": 34.0,
+          "fair_prob": 0.0294
+        },
+        "ht_correct_score_1_0_val": {
+          "raw": 8.31,
+          "fair_prob": 0.1203
+        },
+        "ht_correct_score_1_1_val": {
+          "raw": 7.34,
+          "fair_prob": 0.1362
+        },
+        "ht_correct_score_1_2_val": {
+          "raw": 18.3,
+          "fair_prob": 0.0546
+        },
+        "ht_correct_score_2_0_val": {
+          "raw": 44.0,
+          "fair_prob": 0.0227
+        },
+        "ht_correct_score_2_1_val": {
+          "raw": 46.2,
+          "fair_prob": 0.0216
+        },
+        "ht_correct_score_3_0_val": {
+          "raw": 426.0,
+          "fair_prob": 0.0023
+        }
+      },
+      "1X2 (HT)": {
+        "ht_1x2_1_val": {
+          "raw": 6.24,
+          "fair_prob": 0.1603
+        },
+        "ht_1x2_x_val": {
+          "raw": 2.29,
+          "fair_prob": 0.4367
+        },
+        "ht_1x2_2_val": {
+          "raw": 2.17,
+          "fair_prob": 0.4608
+        }
+      },
+      "HT/FT": {
+        "ht_ft_1_1_val": {
+          "raw": 9.56,
+          "fair_prob": 0.1046
+        },
+        "ht_ft_1_x_val": {
+          "raw": 27.9,
+          "fair_prob": 0.0358
+        },
+        "ht_ft_1_2_val": {
+          "raw": 44.5,
+          "fair_prob": 0.0225
+        },
+        "ht_ft_x_1_val": {
+          "raw": 10.6,
+          "fair_prob": 0.0943
+        },
+        "ht_ft_x_x_val": {
+          "raw": 5.01,
+          "fair_prob": 0.1996
+        },
+        "ht_ft_x_2_val": {
+          "raw": 6.68,
+          "fair_prob": 0.1497
+        },
+        "ht_ft_2_1_val": {
+          "raw": 41.3,
+          "fair_prob": 0.0242
+        },
+        "ht_ft_2_x_val": {
+          "raw": 14.4,
+          "fair_prob": 0.0694
+        },
+        "ht_ft_2_2_val": {
+          "raw": 2.67,
+          "fair_prob": 0.3745
+        }
+      },
+      "1X2 + BTTS Combo": {
+        "1x2_gg_1_gg_val": {
+          "raw": 11.3,
+          "fair_prob": 0.0885
+        },
+        "1x2_gg_1_ng_val": {
+          "raw": 7.66,
+          "fair_prob": 0.1305
+        },
+        "1x2_gg_x_gg_val": {
+          "raw": 5.18,
+          "fair_prob": 0.1931
+        },
+        "1x2_gg_x_ng_val": {
+          "raw": 9.44,
+          "fair_prob": 0.1059
+        },
+        "1x2_gg_2_gg_val": {
+          "raw": 5.04,
+          "fair_prob": 0.1984
+        },
+        "1x2_gg_2_ng_val": {
+          "raw": 2.95,
+          "fair_prob": 0.339
+        }
+      },
+      "1X2 + O/U 1.5 Combo": {
+        "1x2_o_u_1_5_1_ov_val": {
+          "raw": 6.92,
+          "fair_prob": 0.1445
+        },
+        "1x2_o_u_1_5_1_un_val": {
+          "raw": 11.9,
+          "fair_prob": 0.084
+        },
+        "1x2_o_u_1_5_x_ov_val": {
+          "raw": 4.96,
+          "fair_prob": 0.2016
+        },
+        "1x2_o_u_1_5_x_un_val": {
+          "raw": 9.05,
+          "fair_prob": 0.1105
+        },
+        "1x2_o_u_1_5_2_ov_val": {
+          "raw": 2.46,
+          "fair_prob": 0.4065
+        },
+        "1x2_o_u_1_5_2_un_val": {
+          "raw": 6.49,
+          "fair_prob": 0.1541
+        }
+      },
+      "1X2 + O/U 2.5 Combo": {
+        "1x2_o_u_2_5_1_ov_val": {
+          "raw": 9.36,
+          "fair_prob": 0.1068
+        },
+        "1x2_o_u_2_5_1_un_val": {
+          "raw": 8.22,
+          "fair_prob": 0.1217
+        },
+        "1x2_o_u_2_5_x_ov_val": {
+          "raw": 18.0,
+          "fair_prob": 0.0556
+        },
+        "1x2_o_u_2_5_x_un_val": {
+          "raw": 3.9,
+          "fair_prob": 0.2564
+        },
+        "1x2_o_u_2_5_2_ov_val": {
+          "raw": 3.42,
+          "fair_prob": 0.2924
+        },
+        "1x2_o_u_2_5_2_un_val": {
+          "raw": 3.73,
+          "fair_prob": 0.2681
+        }
+      },
+      "Total Goals (Exact)": {
+        "total_goals_0_val": {
+          "raw": 9.52,
+          "fair_prob": 0.105
+        },
+        "total_goals_1_val": {
+          "raw": 4.2,
+          "fair_prob": 0.2381
+        },
+        "total_goals_2_val": {
+          "raw": 3.36,
+          "fair_prob": 0.2976
+        },
+        "total_goals_3_val": {
+          "raw": 4.44,
+          "fair_prob": 0.2252
+        },
+        "total_goals_4_val": {
+          "raw": 7.21,
+          "fair_prob": 0.1387
+        },
+        "total_goals_5_val": {
+          "raw": 15.5,
+          "fair_prob": 0.0645
+        },
+        "total_goals_6_val": {
+          "raw": 37.5,
+          "fair_prob": 0.0267
+        }
+      }
+    }
+  },
+  "league_it": {
+    "NAP - ROM": {
+      "1X2": {
+        "1x2_1_val": {
+          "raw": 2.12,
+          "fair_prob": 0.4717
+        },
+        "1x2_x_val": {
+          "raw": 3.55,
+          "fair_prob": 0.2817
+        },
+        "1x2_2_val": {
+          "raw": 3.36,
+          "fair_prob": 0.2976
+        }
+      },
+      "Double Chance": {
+        "double_chance_1x_val": {
+          "raw": 1.3,
+          "fair_prob": 0.7692
+        },
+        "double_chance_12_val": {
+          "raw": 1.27,
+          "fair_prob": 0.7874
+        },
+        "double_chance_x2_val": {
+          "raw": 1.68,
+          "fair_prob": 0.5952
+        }
+      },
+      "BTTS (GG/NG)": {
+        "gg_ng_gg_val": {
+          "raw": 1.71,
+          "fair_prob": 0.5848
+        },
+        "gg_ng_ng_val": {
+          "raw": 2.15,
+          "fair_prob": 0.4651
+        }
+      },
+      "Total O/U 1.5": {
+        "o_u_1_5_ov_val": {
+          "raw": 1.24,
+          "fair_prob": 0.8065
+        },
+        "o_u_1_5_un_val": {
+          "raw": 4.06,
+          "fair_prob": 0.2463
+        }
+      },
+      "Total O/U 2.5": {
+        "o_u_2_5_ov_val": {
+          "raw": 1.84,
+          "fair_prob": 0.5435
+        },
+        "o_u_2_5_un_val": {
+          "raw": 1.97,
+          "fair_prob": 0.5076
+        }
+      },
+      "Total O/U 3.5": {
+        "o_u_3_5_ov_val": {
+          "raw": 3.22,
+          "fair_prob": 0.3106
+        },
+        "o_u_3_5_un_val": {
+          "raw": 1.36,
+          "fair_prob": 0.7353
+        }
+      },
+      "Total O/U 4.5": {
+        "o_u_4_5_ov_val": {
+          "raw": 7.15,
+          "fair_prob": 0.1399
+        },
+        "o_u_4_5_un_val": {
+          "raw": 1.1,
+          "fair_prob": 0.9091
+        }
+      },
+      "Home O/U 0.5": {
+        "home_o_u_0_5_ov_val": {
+          "raw": 1.19,
+          "fair_prob": 0.8403
+        },
+        "home_o_u_0_5_un_val": {
+          "raw": 4.57,
+          "fair_prob": 0.2188
+        }
+      },
+      "Home O/U 1.5": {
+        "home_o_u_1_5_ov_val": {
+          "raw": 2.07,
+          "fair_prob": 0.4831
+        },
+        "home_o_u_1_5_un_val": {
+          "raw": 1.75,
+          "fair_prob": 0.5714
+        }
+      },
+      "Home O/U 2.5": {
+        "home_o_u_2_5_ov_val": {
+          "raw": 4.86,
+          "fair_prob": 0.2058
+        },
+        "home_o_u_2_5_un_val": {
+          "raw": 1.19,
+          "fair_prob": 0.8403
+        }
+      },
+      "Home O/U 3.5": {
+        "home_o_u_3_5_ov_val": {
+          "raw": 15.5,
+          "fair_prob": 0.0645
+        },
+        "home_o_u_3_5_un_val": {
+          "raw": 1.02,
+          "fair_prob": 0.9804
+        }
+      },
+      "Away O/U 0.5": {
+        "away_o_u_0_5_ov_val": {
+          "raw": 1.35,
+          "fair_prob": 0.7407
+        },
+        "away_o_u_0_5_un_val": {
+          "raw": 3.17,
+          "fair_prob": 0.3155
+        }
+      },
+      "Away O/U 1.5": {
+        "away_o_u_1_5_ov_val": {
+          "raw": 2.87,
+          "fair_prob": 0.3484
+        },
+        "away_o_u_1_5_un_val": {
+          "raw": 1.42,
+          "fair_prob": 0.7042
+        }
+      },
+      "Away O/U 2.5": {
+        "away_o_u_2_5_ov_val": {
+          "raw": 8.57,
+          "fair_prob": 0.1167
+        },
+        "away_o_u_2_5_un_val": {
+          "raw": 1.08,
+          "fair_prob": 0.9259
+        }
+      },
+      "Away O/U 3.5": {
+        "away_o_u_3_5_ov_val": {
+          "raw": 35.5,
+          "fair_prob": 0.0282
+        },
+        "away_o_u_3_5_un_val": {
+          "raw": null,
+          "fair_prob": null
+        }
+      },
+      "Clean Sheet (Home)": {
+        "home_clean_sheet_yes_val": {
+          "raw": 3.17,
+          "fair_prob": 0.3155
+        },
+        "home_clean_sheet_no_val": {
+          "raw": 1.35,
+          "fair_prob": 0.7407
+        }
+      },
+      "Clean Sheet (Away)": {
+        "away_clean_sheet_yes_val": {
+          "raw": 4.57,
+          "fair_prob": 0.2188
+        },
+        "away_clean_sheet_no_val": {
+          "raw": 1.19,
+          "fair_prob": 0.8403
+        }
+      },
+      "Both Team to score In First Halves": {
+        "goal_goal_ht_yes_val": {
+          "raw": 3.43,
+          "fair_prob": 0.2915
+        },
+        "goal_goal_ht_no_val": {
+          "raw": 1.3,
+          "fair_prob": 0.7692
+        }
+      },
+      "Correct Score (FT)": {
+        "correct_score_0_0_val": {
+          "raw": 14.5,
+          "fair_prob": 0.069
+        },
+        "correct_score_0_1_val": {
+          "raw": 11.9,
+          "fair_prob": 0.084
+        },
+        "correct_score_0_2_val": {
+          "raw": 19.4,
+          "fair_prob": 0.0515
+        },
+        "correct_score_0_3_val": {
+          "raw": 46.8,
+          "fair_prob": 0.0214
+        },
+        "correct_score_0_4_val": {
+          "raw": 149.0,
+          "fair_prob": 0.0067
+        },
+        "correct_score_0_5_val": {
+          "raw": 575.0,
+          "fair_prob": 0.0017
+        },
+        "correct_score_0_6_val": {
+          "raw": 2220.0,
+          "fair_prob": 0.0005
+        },
+        "correct_score_1_0_val": {
+          "raw": 8.92,
+          "fair_prob": 0.1121
+        },
+        "correct_score_1_1_val": {
+          "raw": 6.79,
+          "fair_prob": 0.1473
+        },
+        "correct_score_1_2_val": {
+          "raw": 12.3,
+          "fair_prob": 0.0813
+        },
+        "correct_score_1_3_val": {
+          "raw": 29.9,
+          "fair_prob": 0.0334
+        },
+        "correct_score_1_4_val": {
+          "raw": 95.9,
+          "fair_prob": 0.0104
+        },
+        "correct_score_1_5_val": {
+          "raw": 375.0,
+          "fair_prob": 0.0027
+        },
+        "correct_score_2_0_val": {
+          "raw": 11.3,
+          "fair_prob": 0.0885
+        },
+        "correct_score_2_1_val": {
+          "raw": 9.18,
+          "fair_prob": 0.1089
+        },
+        "correct_score_2_2_val": {
+          "raw": 14.0,
+          "fair_prob": 0.0714
+        },
+        "correct_score_2_3_val": {
+          "raw": 38.1,
+          "fair_prob": 0.0262
+        },
+        "correct_score_2_4_val": {
+          "raw": 121.0,
+          "fair_prob": 0.0083
+        },
+        "correct_score_3_0_val": {
+          "raw": 21.6,
+          "fair_prob": 0.0463
+        },
+        "correct_score_3_1_val": {
+          "raw": 17.4,
+          "fair_prob": 0.0575
+        },
+        "correct_score_3_2_val": {
+          "raw": 28.3,
+          "fair_prob": 0.0353
+        },
+        "correct_score_3_3_val": {
+          "raw": 64.4,
+          "fair_prob": 0.0155
+        },
+        "correct_score_4_0_val": {
+          "raw": 55.1,
+          "fair_prob": 0.0181
+        },
+        "correct_score_4_1_val": {
+          "raw": 44.6,
+          "fair_prob": 0.0224
+        },
+        "correct_score_4_2_val": {
+          "raw": 71.8,
+          "fair_prob": 0.0139
+        },
+        "correct_score_5_0_val": {
+          "raw": 172.0,
+          "fair_prob": 0.0058
+        },
+        "correct_score_5_1_val": {
+          "raw": 140.0,
+          "fair_prob": 0.0071
+        },
+        "correct_score_6_0_val": {
+          "raw": 627.0,
+          "fair_prob": 0.0016
+        }
+      },
+      "Correct Score (HT)": {
+        "ht_correct_score_0_0_val": {
+          "raw": 4.25,
+          "fair_prob": 0.2353
+        },
+        "ht_correct_score_0_1_val": {
+          "raw": 6.65,
+          "fair_prob": 0.1504
+        },
+        "ht_correct_score_0_2_val": {
+          "raw": 20.8,
+          "fair_prob": 0.0481
+        },
+        "ht_correct_score_0_3_val": {
+          "raw": 113.0,
+          "fair_prob": 0.0088
+        },
+        "ht_correct_score_1_0_val": {
+          "raw": 4.48,
+          "fair_prob": 0.2232
+        },
+        "ht_correct_score_1_1_val": {
+          "raw": 5.7,
+          "fair_prob": 0.1754
+        },
+        "ht_correct_score_1_2_val": {
+          "raw": 20.0,
+          "fair_prob": 0.05
+        },
+        "ht_correct_score_2_0_val": {
+          "raw": 9.67,
+          "fair_prob": 0.1034
+        },
+        "ht_correct_score_2_1_val": {
+          "raw": 12.8,
+          "fair_prob": 0.0781
+        },
+        "ht_correct_score_3_0_val": {
+          "raw": 34.9,
+          "fair_prob": 0.0287
+        }
+      },
+      "1X2 (HT)": {
+        "ht_1x2_1_val": {
+          "raw": 2.4,
+          "fair_prob": 0.4167
+        },
+        "ht_1x2_x_val": {
+          "raw": 2.54,
+          "fair_prob": 0.3937
+        },
+        "ht_1x2_2_val": {
+          "raw": 4.05,
+          "fair_prob": 0.2469
+        }
+      },
+      "HT/FT": {
+        "ht_ft_1_1_val": {
+          "raw": 3.12,
+          "fair_prob": 0.3205
+        },
+        "ht_ft_1_x_val": {
+          "raw": 14.3,
+          "fair_prob": 0.0699
+        },
+        "ht_ft_1_2_val": {
+          "raw": 30.4,
+          "fair_prob": 0.0329
+        },
+        "ht_ft_x_1_val": {
+          "raw": 7.74,
+          "fair_prob": 0.1292
+        },
+        "ht_ft_x_x_val": {
+          "raw": 5.93,
+          "fair_prob": 0.1686
+        },
+        "ht_ft_x_2_val": {
+          "raw": 9.76,
+          "fair_prob": 0.1025
+        },
+        "ht_ft_2_1_val": {
+          "raw": 31.5,
+          "fair_prob": 0.0317
+        },
+        "ht_ft_2_x_val": {
+          "raw": 19.9,
+          "fair_prob": 0.0503
+        },
+        "ht_ft_2_2_val": {
+          "raw": 5.92,
+          "fair_prob": 0.1689
+        }
+      },
+      "1X2 + BTTS Combo": {
+        "1x2_gg_1_gg_val": {
+          "raw": 4.47,
+          "fair_prob": 0.2237
+        },
+        "1x2_gg_1_ng_val": {
+          "raw": 4.02,
+          "fair_prob": 0.2488
+        },
+        "1x2_gg_x_gg_val": {
+          "raw": 4.67,
+          "fair_prob": 0.2141
+        },
+        "1x2_gg_x_ng_val": {
+          "raw": 14.4,
+          "fair_prob": 0.0694
+        },
+        "1x2_gg_2_gg_val": {
+          "raw": 6.76,
+          "fair_prob": 0.1479
+        },
+        "1x2_gg_2_ng_val": {
+          "raw": 6.62,
+          "fair_prob": 0.1511
+        }
+      },
+      "1X2 + O/U 1.5 Combo": {
+        "1x2_o_u_1_5_1_ov_val": {
+          "raw": 2.59,
+          "fair_prob": 0.3861
+        },
+        "1x2_o_u_1_5_1_un_val": {
+          "raw": 9.35,
+          "fair_prob": 0.107
+        },
+        "1x2_o_u_1_5_x_ov_val": {
+          "raw": 4.47,
+          "fair_prob": 0.2237
+        },
+        "1x2_o_u_1_5_x_un_val": {
+          "raw": 13.8,
+          "fair_prob": 0.0725
+        },
+        "1x2_o_u_1_5_2_ov_val": {
+          "raw": 4.3,
+          "fair_prob": 0.2326
+        },
+        "1x2_o_u_1_5_2_un_val": {
+          "raw": 12.5,
+          "fair_prob": 0.08
+        }
+      },
+      "1X2 + O/U 2.5 Combo": {
+        "1x2_o_u_2_5_1_ov_val": {
+          "raw": 3.31,
+          "fair_prob": 0.3021
+        },
+        "1x2_o_u_2_5_1_un_val": {
+          "raw": 5.23,
+          "fair_prob": 0.1912
+        },
+        "1x2_o_u_2_5_x_ov_val": {
+          "raw": 12.0,
+          "fair_prob": 0.0833
+        },
+        "1x2_o_u_2_5_x_un_val": {
+          "raw": 4.7,
+          "fair_prob": 0.2128
+        },
+        "1x2_o_u_2_5_2_ov_val": {
+          "raw": 5.46,
+          "fair_prob": 0.1832
+        },
+        "1x2_o_u_2_5_2_un_val": {
+          "raw": 7.76,
+          "fair_prob": 0.1289
+        }
+      },
+      "Total Goals (Exact)": {
+        "total_goals_0_val": {
+          "raw": 14.5,
+          "fair_prob": 0.069
+        },
+        "total_goals_1_val": {
+          "raw": 5.35,
+          "fair_prob": 0.1869
+        },
+        "total_goals_2_val": {
+          "raw": 3.65,
+          "fair_prob": 0.274
+        },
+        "total_goals_3_val": {
+          "raw": 4.07,
+          "fair_prob": 0.2457
+        },
+        "total_goals_4_val": {
+          "raw": 5.61,
+          "fair_prob": 0.1783
+        },
+        "total_goals_5_val": {
+          "raw": 10.2,
+          "fair_prob": 0.098
+        },
+        "total_goals_6_val": {
+          "raw": 21.1,
+          "fair_prob": 0.0474
+        }
+      }
+    },
+    "JUV - LAZ": {
+      "1X2": {
+        "1x2_1_val": {
+          "raw": 1.72,
+          "fair_prob": 0.5814
+        },
+        "1x2_x_val": {
+          "raw": 3.81,
+          "fair_prob": 0.2625
+        },
+        "1x2_2_val": {
+          "raw": 4.8,
+          "fair_prob": 0.2083
+        }
+      },
+      "Double Chance": {
+        "double_chance_1x_val": {
+          "raw": 1.16,
+          "fair_prob": 0.8621
+        },
+        "double_chance_12_val": {
+          "raw": 1.24,
+          "fair_prob": 0.8065
+        },
+        "double_chance_x2_val": {
+          "raw": 2.07,
+          "fair_prob": 0.4831
+        }
+      },
+      "BTTS (GG/NG)": {
+        "gg_ng_gg_val": {
+          "raw": 1.75,
+          "fair_prob": 0.5714
+        },
+        "gg_ng_ng_val": {
+          "raw": 2.08,
+          "fair_prob": 0.4808
+        }
+      },
+      "Total O/U 1.5": {
+        "o_u_1_5_ov_val": {
+          "raw": 1.21,
+          "fair_prob": 0.8264
+        },
+        "o_u_1_5_un_val": {
+          "raw": 4.34,
+          "fair_prob": 0.2304
+        }
+      },
+      "Total O/U 2.5": {
+        "o_u_2_5_ov_val": {
+          "raw": 1.77,
+          "fair_prob": 0.565
+        },
+        "o_u_2_5_un_val": {
+          "raw": 2.06,
+          "fair_prob": 0.4854
+        }
+      },
+      "Total O/U 3.5": {
+        "o_u_3_5_ov_val": {
+          "raw": 3.02,
+          "fair_prob": 0.3311
+        },
+        "o_u_3_5_un_val": {
+          "raw": 1.39,
+          "fair_prob": 0.7194
+        }
+      },
+      "Total O/U 4.5": {
+        "o_u_4_5_ov_val": {
+          "raw": 6.56,
+          "fair_prob": 0.1524
+        },
+        "o_u_4_5_un_val": {
+          "raw": 1.12,
+          "fair_prob": 0.8929
+        }
+      },
+      "Home O/U 0.5": {
+        "home_o_u_0_5_ov_val": {
+          "raw": 1.12,
+          "fair_prob": 0.8929
+        },
+        "home_o_u_0_5_un_val": {
+          "raw": 6.03,
+          "fair_prob": 0.1658
+        }
+      },
+      "Home O/U 1.5": {
+        "home_o_u_1_5_ov_val": {
+          "raw": 1.75,
+          "fair_prob": 0.5714
+        },
+        "home_o_u_1_5_un_val": {
+          "raw": 2.08,
+          "fair_prob": 0.4808
+        }
+      },
+      "Home O/U 2.5": {
+        "home_o_u_2_5_ov_val": {
+          "raw": 3.59,
+          "fair_prob": 0.2786
+        },
+        "home_o_u_2_5_un_val": {
+          "raw": 1.3,
+          "fair_prob": 0.7692
+        }
+      },
+      "Home O/U 3.5": {
+        "home_o_u_3_5_ov_val": {
+          "raw": 9.77,
+          "fair_prob": 0.1024
+        },
+        "home_o_u_3_5_un_val": {
+          "raw": 1.06,
+          "fair_prob": 0.9434
+        }
+      },
+      "Away O/U 0.5": {
+        "away_o_u_0_5_ov_val": {
+          "raw": 1.47,
+          "fair_prob": 0.6803
+        },
+        "away_o_u_0_5_un_val": {
+          "raw": 2.65,
+          "fair_prob": 0.3774
+        }
+      },
+      "Away O/U 1.5": {
+        "away_o_u_1_5_ov_val": {
+          "raw": 3.59,
+          "fair_prob": 0.2786
+        },
+        "away_o_u_1_5_un_val": {
+          "raw": 1.29,
+          "fair_prob": 0.7752
+        }
+      },
+      "Away O/U 2.5": {
+        "away_o_u_2_5_ov_val": {
+          "raw": 12.7,
+          "fair_prob": 0.0787
+        },
+        "away_o_u_2_5_un_val": {
+          "raw": 1.03,
+          "fair_prob": 0.9709
+        }
+      },
+      "Away O/U 3.5": {
+        "away_o_u_3_5_ov_val": {
+          "raw": 63.8,
+          "fair_prob": 0.0157
+        },
+        "away_o_u_3_5_un_val": {
+          "raw": null,
+          "fair_prob": null
+        }
+      },
+      "Clean Sheet (Home)": {
+        "home_clean_sheet_yes_val": {
+          "raw": 2.65,
+          "fair_prob": 0.3774
+        },
+        "home_clean_sheet_no_val": {
+          "raw": 1.47,
+          "fair_prob": 0.6803
+        }
+      },
+      "Clean Sheet (Away)": {
+        "away_clean_sheet_yes_val": {
+          "raw": 6.03,
+          "fair_prob": 0.1658
+        },
+        "away_clean_sheet_no_val": {
+          "raw": 1.12,
+          "fair_prob": 0.8929
+        }
+      },
+      "Both Team to score In First Halves": {
+        "goal_goal_ht_yes_val": {
+          "raw": 3.61,
+          "fair_prob": 0.277
+        },
+        "goal_goal_ht_no_val": {
+          "raw": 1.28,
+          "fair_prob": 0.7812
+        }
+      },
+      "Correct Score (FT)": {
+        "correct_score_0_0_val": {
+          "raw": 15.6,
+          "fair_prob": 0.0641
+        },
+        "correct_score_0_1_val": {
+          "raw": 15.8,
+          "fair_prob": 0.0633
+        },
+        "correct_score_0_2_val": {
+          "raw": 29.8,
+          "fair_prob": 0.0336
+        },
+        "correct_score_0_3_val": {
+          "raw": 84.1,
+          "fair_prob": 0.0119
+        },
+        "correct_score_0_4_val": {
+          "raw": 309.0,
+          "fair_prob": 0.0032
+        },
+        "correct_score_0_5_val": {
+          "raw": 1280.0,
+          "fair_prob": 0.0008
+        },
+        "correct_score_0_6_val": {
+          "raw": 4310.0,
+          "fair_prob": 0.0002
+        },
+        "correct_score_1_0_val": {
+          "raw": 8.31,
+          "fair_prob": 0.1203
+        },
+        "correct_score_1_1_val": {
+          "raw": 7.31,
+          "fair_prob": 0.1368
+        },
+        "correct_score_1_2_val": {
+          "raw": 16.2,
+          "fair_prob": 0.0617
+        },
+        "correct_score_1_3_val": {
+          "raw": 45.9,
+          "fair_prob": 0.0218
+        },
+        "correct_score_1_4_val": {
+          "raw": 170.0,
+          "fair_prob": 0.0059
+        },
+        "correct_score_1_5_val": {
+          "raw": 750.0,
+          "fair_prob": 0.0013
+        },
+        "correct_score_2_0_val": {
+          "raw": 9.03,
+          "fair_prob": 0.1107
+        },
+        "correct_score_2_1_val": {
+          "raw": 8.52,
+          "fair_prob": 0.1174
+        },
+        "correct_score_2_2_val": {
+          "raw": 14.9,
+          "fair_prob": 0.0671
+        },
+        "correct_score_2_3_val": {
+          "raw": 49.8,
+          "fair_prob": 0.0201
+        },
+        "correct_score_2_4_val": {
+          "raw": 185.0,
+          "fair_prob": 0.0054
+        },
+        "correct_score_3_0_val": {
+          "raw": 14.7,
+          "fair_prob": 0.068
+        },
+        "correct_score_3_1_val": {
+          "raw": 13.9,
+          "fair_prob": 0.0719
+        },
+        "correct_score_3_2_val": {
+          "raw": 26.0,
+          "fair_prob": 0.0385
+        },
+        "correct_score_3_3_val": {
+          "raw": 68.6,
+          "fair_prob": 0.0146
+        },
+        "correct_score_4_0_val": {
+          "raw": 31.9,
+          "fair_prob": 0.0313
+        },
+        "correct_score_4_1_val": {
+          "raw": 30.0,
+          "fair_prob": 0.0333
+        },
+        "correct_score_4_2_val": {
+          "raw": 56.5,
+          "fair_prob": 0.0177
+        },
+        "correct_score_5_0_val": {
+          "raw": 86.0,
+          "fair_prob": 0.0116
+        },
+        "correct_score_5_1_val": {
+          "raw": 81.2,
+          "fair_prob": 0.0123
+        },
+        "correct_score_6_0_val": {
+          "raw": 274.0,
+          "fair_prob": 0.0036
+        }
+      },
+      "Correct Score (HT)": {
+        "ht_correct_score_0_0_val": {
+          "raw": 4.57,
+          "fair_prob": 0.2188
+        },
+        "ht_correct_score_0_1_val": {
+          "raw": 9.41,
+          "fair_prob": 0.1063
+        },
+        "ht_correct_score_0_2_val": {
+          "raw": 37.5,
+          "fair_prob": 0.0267
+        },
+        "ht_correct_score_0_3_val": {
+          "raw": 271.0,
+          "fair_prob": 0.0037
+        },
+        "ht_correct_score_1_0_val": {
+          "raw": 3.92,
+          "fair_prob": 0.2551
+        },
+        "ht_correct_score_1_1_val": {
+          "raw": 6.14,
+          "fair_prob": 0.1629
+        },
+        "ht_correct_score_1_2_val": {
+          "raw": 29.2,
+          "fair_prob": 0.0342
+        },
+        "ht_correct_score_2_0_val": {
+          "raw": 6.71,
+          "fair_prob": 0.149
+        },
+        "ht_correct_score_2_1_val": {
+          "raw": 11.0,
+          "fair_prob": 0.0909
+        },
+        "ht_correct_score_3_0_val": {
+          "raw": 18.6,
+          "fair_prob": 0.0538
+        }
+      },
+      "1X2 (HT)": {
+        "ht_1x2_1_val": {
+          "raw": 1.9,
+          "fair_prob": 0.5263
+        },
+        "ht_1x2_x_val": {
+          "raw": 2.74,
+          "fair_prob": 0.365
+        },
+        "ht_1x2_2_val": {
+          "raw": 6.1,
+          "fair_prob": 0.1639
+        }
+      },
+      "HT/FT": {
+        "ht_ft_1_1_val": {
+          "raw": 2.32,
+          "fair_prob": 0.431
+        },
+        "ht_ft_1_x_val": {
+          "raw": 13.1,
+          "fair_prob": 0.0763
+        },
+        "ht_ft_1_2_val": {
+          "raw": 34.2,
+          "fair_prob": 0.0292
+        },
+        "ht_ft_x_1_val": {
+          "raw": 7.38,
+          "fair_prob": 0.1355
+        },
+        "ht_ft_x_x_val": {
+          "raw": 6.42,
+          "fair_prob": 0.1558
+        },
+        "ht_ft_x_2_val": {
+          "raw": 12.3,
+          "fair_prob": 0.0813
+        },
+        "ht_ft_2_1_val": {
+          "raw": 36.9,
+          "fair_prob": 0.0271
+        },
+        "ht_ft_2_x_val": {
+          "raw": 27.2,
+          "fair_prob": 0.0368
+        },
+        "ht_ft_2_2_val": {
+          "raw": 9.72,
+          "fair_prob": 0.1029
+        }
+      },
+      "1X2 + BTTS Combo": {
+        "1x2_gg_1_gg_val": {
+          "raw": 3.76,
+          "fair_prob": 0.266
+        },
+        "1x2_gg_1_ng_val": {
+          "raw": 3.16,
+          "fair_prob": 0.3165
+        },
+        "1x2_gg_x_gg_val": {
+          "raw": 5.01,
+          "fair_prob": 0.1996
+        },
+        "1x2_gg_x_ng_val": {
+          "raw": 15.5,
+          "fair_prob": 0.0645
+        },
+        "1x2_gg_2_gg_val": {
+          "raw": 9.44,
+          "fair_prob": 0.1059
+        },
+        "1x2_gg_2_ng_val": {
+          "raw": 9.71,
+          "fair_prob": 0.103
+        }
+      },
+      "1X2 + O/U 1.5 Combo": {
+        "1x2_o_u_1_5_1_ov_val": {
+          "raw": 2.03,
+          "fair_prob": 0.4926
+        },
+        "1x2_o_u_1_5_1_un_val": {
+          "raw": 8.71,
+          "fair_prob": 0.1148
+        },
+        "1x2_o_u_1_5_x_ov_val": {
+          "raw": 4.8,
+          "fair_prob": 0.2083
+        },
+        "1x2_o_u_1_5_x_un_val": {
+          "raw": 14.9,
+          "fair_prob": 0.0671
+        },
+        "1x2_o_u_1_5_2_ov_val": {
+          "raw": 6.33,
+          "fair_prob": 0.158
+        },
+        "1x2_o_u_1_5_2_un_val": {
+          "raw": 16.6,
+          "fair_prob": 0.0602
+        }
+      },
+      "1X2 + O/U 2.5 Combo": {
+        "1x2_o_u_2_5_1_ov_val": {
+          "raw": 2.58,
+          "fair_prob": 0.3876
+        },
+        "1x2_o_u_2_5_1_un_val": {
+          "raw": 4.53,
+          "fair_prob": 0.2208
+        },
+        "1x2_o_u_2_5_x_ov_val": {
+          "raw": 12.8,
+          "fair_prob": 0.0781
+        },
+        "1x2_o_u_2_5_x_un_val": {
+          "raw": 5.06,
+          "fair_prob": 0.1976
+        },
+        "1x2_o_u_2_5_2_ov_val": {
+          "raw": 7.94,
+          "fair_prob": 0.1259
+        },
+        "1x2_o_u_2_5_2_un_val": {
+          "raw": 10.8,
+          "fair_prob": 0.0926
+        }
+      },
+      "Total Goals (Exact)": {
+        "total_goals_0_val": {
+          "raw": 15.6,
+          "fair_prob": 0.0641
+        },
+        "total_goals_1_val": {
+          "raw": 5.71,
+          "fair_prob": 0.1751
+        },
+        "total_goals_2_val": {
+          "raw": 3.73,
+          "fair_prob": 0.2681
+        },
+        "total_goals_3_val": {
+          "raw": 4.05,
+          "fair_prob": 0.2469
+        },
+        "total_goals_4_val": {
+          "raw": 5.37,
+          "fair_prob": 0.1862
+        },
+        "total_goals_5_val": {
+          "raw": 9.54,
+          "fair_prob": 0.1048
+        },
+        "total_goals_6_val": {
+          "raw": 19.0,
+          "fair_prob": 0.0526
+        }
+      }
+    }
+  },
+  "league_de": {
+    "BVB - LEV": {
+      "1X2": {
+        "1x2_1_val": {
+          "raw": 2.24,
+          "fair_prob": 0.4464
+        },
+        "1x2_x_val": {
+          "raw": 3.3,
+          "fair_prob": 0.303
+        },
+        "1x2_2_val": {
+          "raw": 3.32,
+          "fair_prob": 0.3012
+        }
+      },
+      "Double Chance": {
+        "double_chance_1x_val": {
+          "raw": 1.3,
+          "fair_prob": 0.7692
+        },
+        "double_chance_12_val": {
+          "raw": 1.31,
+          "fair_prob": 0.7634
+        },
+        "double_chance_x2_val": {
+          "raw": 1.61,
+          "fair_prob": 0.6211
+        }
+      },
+      "BTTS (GG/NG)": {
+        "gg_ng_gg_val": {
+          "raw": 1.62,
+          "fair_prob": 0.6173
+        },
+        "gg_ng_ng_val": {
+          "raw": 2.29,
+          "fair_prob": 0.4367
+        }
+      },
+      "Total O/U 1.5": {
+        "o_u_1_5_ov_val": {
+          "raw": 1.21,
+          "fair_prob": 0.8264
+        },
+        "o_u_1_5_un_val": {
+          "raw": 4.38,
+          "fair_prob": 0.2283
+        }
+      },
+      "Total O/U 2.5": {
+        "o_u_2_5_ov_val": {
+          "raw": 1.75,
+          "fair_prob": 0.5714
+        },
+        "o_u_2_5_un_val": {
+          "raw": 2.08,
+          "fair_prob": 0.4808
+        }
+      },
+      "Total O/U 3.5": {
+        "o_u_3_5_ov_val": {
+          "raw": 2.92,
+          "fair_prob": 0.3425
+        },
+        "o_u_3_5_un_val": {
+          "raw": 1.42,
+          "fair_prob": 0.7042
+        }
+      },
+      "Total O/U 4.5": {
+        "o_u_4_5_ov_val": {
+          "raw": 6.44,
+          "fair_prob": 0.1553
+        },
+        "o_u_4_5_un_val": {
+          "raw": 1.12,
+          "fair_prob": 0.8929
+        }
+      },
+      "Home O/U 0.5": {
+        "home_o_u_0_5_ov_val": {
+          "raw": 1.18,
+          "fair_prob": 0.8475
+        },
+        "home_o_u_0_5_un_val": {
+          "raw": 4.68,
+          "fair_prob": 0.2137
+        }
+      },
+      "Home O/U 1.5": {
+        "home_o_u_1_5_ov_val": {
+          "raw": 2.02,
+          "fair_prob": 0.495
+        },
+        "home_o_u_1_5_un_val": {
+          "raw": 1.79,
+          "fair_prob": 0.5587
+        }
+      },
+      "Home O/U 2.5": {
+        "home_o_u_2_5_ov_val": {
+          "raw": 4.79,
+          "fair_prob": 0.2088
+        },
+        "home_o_u_2_5_un_val": {
+          "raw": 1.19,
+          "fair_prob": 0.8403
+        }
+      },
+      "Home O/U 3.5": {
+        "home_o_u_3_5_ov_val": {
+          "raw": 15.7,
+          "fair_prob": 0.0637
+        },
+        "home_o_u_3_5_un_val": {
+          "raw": 1.02,
+          "fair_prob": 0.9804
+        }
+      },
+      "Away O/U 0.5": {
+        "away_o_u_0_5_ov_val": {
+          "raw": 1.3,
+          "fair_prob": 0.7692
+        },
+        "away_o_u_0_5_un_val": {
+          "raw": 3.43,
+          "fair_prob": 0.2915
+        }
+      },
+      "Away O/U 1.5": {
+        "away_o_u_1_5_ov_val": {
+          "raw": 2.61,
+          "fair_prob": 0.3831
+        },
+        "away_o_u_1_5_un_val": {
+          "raw": 1.49,
+          "fair_prob": 0.6711
+        }
+      },
+      "Away O/U 2.5": {
+        "away_o_u_2_5_ov_val": {
+          "raw": 7.46,
+          "fair_prob": 0.134
+        },
+        "away_o_u_2_5_un_val": {
+          "raw": 1.1,
+          "fair_prob": 0.9091
+        }
+      },
+      "Away O/U 3.5": {
+        "away_o_u_3_5_ov_val": {
+          "raw": 30.1,
+          "fair_prob": 0.0332
+        },
+        "away_o_u_3_5_un_val": {
+          "raw": null,
+          "fair_prob": null
+        }
+      },
+      "Clean Sheet (Home)": {
+        "home_clean_sheet_yes_val": {
+          "raw": 3.43,
+          "fair_prob": 0.2915
+        },
+        "home_clean_sheet_no_val": {
+          "raw": 1.3,
+          "fair_prob": 0.7692
+        }
+      },
+      "Clean Sheet (Away)": {
+        "away_clean_sheet_yes_val": {
+          "raw": 4.68,
+          "fair_prob": 0.2137
+        },
+        "away_clean_sheet_no_val": {
+          "raw": 1.18,
+          "fair_prob": 0.8475
+        }
+      },
+      "Both Team to score In First Halves": {
+        "goal_goal_ht_yes_val": {
+          "raw": 3.14,
+          "fair_prob": 0.3185
+        },
+        "goal_goal_ht_no_val": {
+          "raw": 1.35,
+          "fair_prob": 0.7407
+        }
+      },
+      "Correct Score (FT)": {
+        "correct_score_0_0_val": {
+          "raw": 14.3,
+          "fair_prob": 0.0699
+        },
+        "correct_score_0_1_val": {
+          "raw": 13.3,
+          "fair_prob": 0.0752
+        },
+        "correct_score_0_2_val": {
+          "raw": 19.7,
+          "fair_prob": 0.0508
+        },
+        "correct_score_0_3_val": {
+          "raw": 44.0,
+          "fair_prob": 0.0227
+        },
+        "correct_score_0_4_val": {
+          "raw": 130.0,
+          "fair_prob": 0.0077
+        },
+        "correct_score_0_5_val": {
+          "raw": 479.0,
+          "fair_prob": 0.0021
+        },
+        "correct_score_0_6_val": {
+          "raw": 1990.0,
+          "fair_prob": 0.0005
+        },
+        "correct_score_1_0_val": {
+          "raw": 10.0,
+          "fair_prob": 0.1
+        },
+        "correct_score_1_1_val": {
+          "raw": 6.79,
+          "fair_prob": 0.1473
+        },
+        "correct_score_1_2_val": {
+          "raw": 12.3,
+          "fair_prob": 0.0813
+        },
+        "correct_score_1_3_val": {
+          "raw": 27.5,
+          "fair_prob": 0.0364
+        },
+        "correct_score_1_4_val": {
+          "raw": 81.2,
+          "fair_prob": 0.0123
+        },
+        "correct_score_1_5_val": {
+          "raw": 299.0,
+          "fair_prob": 0.0033
+        },
+        "correct_score_2_0_val": {
+          "raw": 12.6,
+          "fair_prob": 0.0794
+        },
+        "correct_score_2_1_val": {
+          "raw": 9.39,
+          "fair_prob": 0.1065
+        },
+        "correct_score_2_2_val": {
+          "raw": 11.4,
+          "fair_prob": 0.0877
+        },
+        "correct_score_2_3_val": {
+          "raw": 34.8,
+          "fair_prob": 0.0287
+        },
+        "correct_score_2_4_val": {
+          "raw": 102.0,
+          "fair_prob": 0.0098
+        },
+        "correct_score_3_0_val": {
+          "raw": 23.7,
+          "fair_prob": 0.0422
+        },
+        "correct_score_3_1_val": {
+          "raw": 17.7,
+          "fair_prob": 0.0565
+        },
+        "correct_score_3_2_val": {
+          "raw": 26.4,
+          "fair_prob": 0.0379
+        },
+        "correct_score_3_3_val": {
+          "raw": 45.5,
+          "fair_prob": 0.022
+        },
+        "correct_score_4_0_val": {
+          "raw": 59.8,
+          "fair_prob": 0.0167
+        },
+        "correct_score_4_1_val": {
+          "raw": 44.5,
+          "fair_prob": 0.0225
+        },
+        "correct_score_4_2_val": {
+          "raw": 66.1,
+          "fair_prob": 0.0151
+        },
+        "correct_score_5_0_val": {
+          "raw": 186.0,
+          "fair_prob": 0.0054
+        },
+        "correct_score_5_1_val": {
+          "raw": 140.0,
+          "fair_prob": 0.0071
+        },
+        "correct_score_6_0_val": {
+          "raw": 697.0,
+          "fair_prob": 0.0014
+        }
+      },
+      "Correct Score (HT)": {
+        "ht_correct_score_0_0_val": {
+          "raw": 4.17,
+          "fair_prob": 0.2398
+        },
+        "ht_correct_score_0_1_val": {
+          "raw": 7.14,
+          "fair_prob": 0.1401
+        },
+        "ht_correct_score_0_2_val": {
+          "raw": 19.2,
+          "fair_prob": 0.0521
+        },
+        "ht_correct_score_0_3_val": {
+          "raw": 92.5,
+          "fair_prob": 0.0108
+        },
+        "ht_correct_score_1_0_val": {
+          "raw": 4.95,
+          "fair_prob": 0.202
+        },
+        "ht_correct_score_1_1_val": {
+          "raw": 5.27,
+          "fair_prob": 0.1898
+        },
+        "ht_correct_score_1_2_val": {
+          "raw": 17.5,
+          "fair_prob": 0.0571
+        },
+        "ht_correct_score_2_0_val": {
+          "raw": 10.3,
+          "fair_prob": 0.0971
+        },
+        "ht_correct_score_2_1_val": {
+          "raw": 11.7,
+          "fair_prob": 0.0855
+        },
+        "ht_correct_score_3_0_val": {
+          "raw": 36.5,
+          "fair_prob": 0.0274
+        }
+      },
+      "1X2 (HT)": {
+        "ht_1x2_1_val": {
+          "raw": 2.53,
+          "fair_prob": 0.3953
+        },
+        "ht_1x2_x_val": {
+          "raw": 2.43,
+          "fair_prob": 0.4115
+        },
+        "ht_1x2_2_val": {
+          "raw": 4.0,
+          "fair_prob": 0.25
+        }
+      },
+      "HT/FT": {
+        "ht_ft_1_1_val": {
+          "raw": 3.41,
+          "fair_prob": 0.2933
+        },
+        "ht_ft_1_x_val": {
+          "raw": 13.2,
+          "fair_prob": 0.0758
+        },
+        "ht_ft_1_2_val": {
+          "raw": 30.2,
+          "fair_prob": 0.0331
+        },
+        "ht_ft_x_1_val": {
+          "raw": 7.6,
+          "fair_prob": 0.1316
+        },
+        "ht_ft_x_x_val": {
+          "raw": 5.56,
+          "fair_prob": 0.1799
+        },
+        "ht_ft_x_2_val": {
+          "raw": 9.31,
+          "fair_prob": 0.1074
+        },
+        "ht_ft_2_1_val": {
+          "raw": 31.7,
+          "fair_prob": 0.0315
+        },
+        "ht_ft_2_x_val": {
+          "raw": 18.0,
+          "fair_prob": 0.0556
+        },
+        "ht_ft_2_2_val": {
+          "raw": 5.99,
+          "fair_prob": 0.1669
+        }
+      },
+      "1X2 + BTTS Combo": {
+        "1x2_gg_1_gg_val": {
+          "raw": 4.46,
+          "fair_prob": 0.2242
+        },
+        "1x2_gg_1_ng_val": {
+          "raw": 4.47,
+          "fair_prob": 0.2237
+        },
+        "1x2_gg_x_gg_val": {
+          "raw": 4.26,
+          "fair_prob": 0.2347
+        },
+        "1x2_gg_x_ng_val": {
+          "raw": 14.2,
+          "fair_prob": 0.0704
+        },
+        "1x2_gg_2_gg_val": {
+          "raw": 6.38,
+          "fair_prob": 0.1567
+        },
+        "1x2_gg_2_ng_val": {
+          "raw": 6.88,
+          "fair_prob": 0.1453
+        }
+      },
+      "1X2 + O/U 1.5 Combo": {
+        "1x2_o_u_1_5_1_ov_val": {
+          "raw": 2.68,
+          "fair_prob": 0.3731
+        },
+        "1x2_o_u_1_5_1_un_val": {
+          "raw": 10.5,
+          "fair_prob": 0.0952
+        },
+        "1x2_o_u_1_5_x_ov_val": {
+          "raw": 4.08,
+          "fair_prob": 0.2451
+        },
+        "1x2_o_u_1_5_x_un_val": {
+          "raw": 13.6,
+          "fair_prob": 0.0735
+        },
+        "1x2_o_u_1_5_2_ov_val": {
+          "raw": 4.11,
+          "fair_prob": 0.2433
+        },
+        "1x2_o_u_1_5_2_un_val": {
+          "raw": 13.9,
+          "fair_prob": 0.0719
+        }
+      },
+      "1X2 + O/U 2.5 Combo": {
+        "1x2_o_u_2_5_1_ov_val": {
+          "raw": 3.37,
+          "fair_prob": 0.2967
+        },
+        "1x2_o_u_2_5_1_un_val": {
+          "raw": 5.86,
+          "fair_prob": 0.1706
+        },
+        "1x2_o_u_2_5_x_ov_val": {
+          "raw": 9.56,
+          "fair_prob": 0.1046
+        },
+        "1x2_o_u_2_5_x_un_val": {
+          "raw": 4.68,
+          "fair_prob": 0.2137
+        },
+        "1x2_o_u_2_5_2_ov_val": {
+          "raw": 5.13,
+          "fair_prob": 0.1949
+        },
+        "1x2_o_u_2_5_2_un_val": {
+          "raw": 8.33,
+          "fair_prob": 0.12
+        }
+      },
+      "Total Goals (Exact)": {
+        "total_goals_0_val": {
+          "raw": 14.3,
+          "fair_prob": 0.0699
+        },
+        "total_goals_1_val": {
+          "raw": 6.0,
+          "fair_prob": 0.1667
+        },
+        "total_goals_2_val": {
+          "raw": 3.78,
+          "fair_prob": 0.2646
+        },
+        "total_goals_3_val": {
+          "raw": 4.15,
+          "fair_prob": 0.241
+        },
+        "total_goals_4_val": {
+          "raw": 5.12,
+          "fair_prob": 0.1953
+        },
+        "total_goals_5_val": {
+          "raw": 9.64,
+          "fair_prob": 0.1037
+        },
+        "total_goals_6_val": {
+          "raw": 17.6,
+          "fair_prob": 0.0568
+        }
+      }
+    },
+    "BMU - HOF": {
+      "1X2": {
+        "1x2_1_val": {
+          "raw": 1.43,
+          "fair_prob": 0.6993
+        },
+        "1x2_x_val": {
+          "raw": 4.39,
+          "fair_prob": 0.2278
+        },
+        "1x2_2_val": {
+          "raw": 7.94,
+          "fair_prob": 0.1259
+        }
+      },
+      "Double Chance": {
+        "double_chance_1x_val": {
+          "raw": 1.05,
+          "fair_prob": 0.9524
+        },
+        "double_chance_12_val": {
+          "raw": 1.19,
+          "fair_prob": 0.8403
+        },
+        "double_chance_x2_val": {
+          "raw": 2.76,
+          "fair_prob": 0.3623
+        }
+      },
+      "BTTS (GG/NG)": {
+        "gg_ng_gg_val": {
+          "raw": 1.79,
+          "fair_prob": 0.5587
+        },
+        "gg_ng_ng_val": {
+          "raw": 2.03,
+          "fair_prob": 0.4926
+        }
+      },
+      "Total O/U 1.5": {
+        "o_u_1_5_ov_val": {
+          "raw": 1.16,
+          "fair_prob": 0.8621
+        },
+        "o_u_1_5_un_val": {
+          "raw": 5.1,
+          "fair_prob": 0.1961
+        }
+      },
+      "Total O/U 2.5": {
+        "o_u_2_5_ov_val": {
+          "raw": 1.61,
+          "fair_prob": 0.6211
+        },
+        "o_u_2_5_un_val": {
+          "raw": 2.33,
+          "fair_prob": 0.4292
+        }
+      },
+      "Total O/U 3.5": {
+        "o_u_3_5_ov_val": {
+          "raw": 2.59,
+          "fair_prob": 0.3861
+        },
+        "o_u_3_5_un_val": {
+          "raw": 1.51,
+          "fair_prob": 0.6623
+        }
+      },
+      "Total O/U 4.5": {
+        "o_u_4_5_ov_val": {
+          "raw": 5.3,
+          "fair_prob": 0.1887
+        },
+        "o_u_4_5_un_val": {
+          "raw": 1.16,
+          "fair_prob": 0.8621
+        }
+      },
+      "Home O/U 0.5": {
+        "home_o_u_0_5_ov_val": {
+          "raw": 1.06,
+          "fair_prob": 0.9434
+        },
+        "home_o_u_0_5_un_val": {
+          "raw": 8.72,
+          "fair_prob": 0.1147
+        }
+      },
+      "Home O/U 1.5": {
+        "home_o_u_1_5_ov_val": {
+          "raw": 1.46,
+          "fair_prob": 0.6849
+        },
+        "home_o_u_1_5_un_val": {
+          "raw": 2.68,
+          "fair_prob": 0.3731
+        }
+      },
+      "Home O/U 2.5": {
+        "home_o_u_2_5_ov_val": {
+          "raw": 2.61,
+          "fair_prob": 0.3831
+        },
+        "home_o_u_2_5_un_val": {
+          "raw": 1.5,
+          "fair_prob": 0.6667
+        }
+      },
+      "Home O/U 3.5": {
+        "home_o_u_3_5_ov_val": {
+          "raw": 6.12,
+          "fair_prob": 0.1634
+        },
+        "home_o_u_3_5_un_val": {
+          "raw": 1.13,
+          "fair_prob": 0.885
+        }
+      },
+      "Away O/U 0.5": {
+        "away_o_u_0_5_ov_val": {
+          "raw": 1.61,
+          "fair_prob": 0.6211
+        },
+        "away_o_u_0_5_un_val": {
+          "raw": 2.3,
+          "fair_prob": 0.4348
+        }
+      },
+      "Away O/U 1.5": {
+        "away_o_u_1_5_ov_val": {
+          "raw": 4.47,
+          "fair_prob": 0.2237
+        },
+        "away_o_u_1_5_un_val": {
+          "raw": 1.21,
+          "fair_prob": 0.8264
+        }
+      },
+      "Away O/U 2.5": {
+        "away_o_u_2_5_ov_val": {
+          "raw": 18.9,
+          "fair_prob": 0.0529
+        },
+        "away_o_u_2_5_un_val": {
+          "raw": null,
+          "fair_prob": null
+        }
+      },
+      "Away O/U 3.5": {
+        "away_o_u_3_5_ov_val": {
+          "raw": 116.0,
+          "fair_prob": 0.0086
+        },
+        "away_o_u_3_5_un_val": {
+          "raw": null,
+          "fair_prob": null
+        }
+      },
+      "Clean Sheet (Home)": {
+        "home_clean_sheet_yes_val": {
+          "raw": 2.3,
+          "fair_prob": 0.4348
+        },
+        "home_clean_sheet_no_val": {
+          "raw": 1.61,
+          "fair_prob": 0.6211
+        }
+      },
+      "Clean Sheet (Away)": {
+        "away_clean_sheet_yes_val": {
+          "raw": 8.72,
+          "fair_prob": 0.1147
+        },
+        "away_clean_sheet_no_val": {
+          "raw": 1.06,
+          "fair_prob": 0.9434
+        }
+      },
+      "Both Team to score In First Halves": {
+        "goal_goal_ht_yes_val": {
+          "raw": 3.88,
+          "fair_prob": 0.2577
+        },
+        "goal_goal_ht_no_val": {
+          "raw": 1.25,
+          "fair_prob": 0.8
+        }
+      },
+      "Correct Score (FT)": {
+        "correct_score_0_0_val": {
+          "raw": 17.6,
+          "fair_prob": 0.0568
+        },
+        "correct_score_0_1_val": {
+          "raw": 26.5,
+          "fair_prob": 0.0377
+        },
+        "correct_score_0_2_val": {
+          "raw": 54.6,
+          "fair_prob": 0.0183
+        },
+        "correct_score_0_3_val": {
+          "raw": 166.0,
+          "fair_prob": 0.006
+        },
+        "correct_score_0_4_val": {
+          "raw": 689.0,
+          "fair_prob": 0.0015
+        },
+        "correct_score_0_5_val": {
+          "raw": 3080.0,
+          "fair_prob": 0.0003
+        },
+        "correct_score_0_6_val": {
+          "raw": 9790.0,
+          "fair_prob": 0.0001
+        },
+        "correct_score_1_0_val": {
+          "raw": 8.63,
+          "fair_prob": 0.1159
+        },
+        "correct_score_1_1_val": {
+          "raw": 8.95,
+          "fair_prob": 0.1117
+        },
+        "correct_score_1_2_val": {
+          "raw": 25.0,
+          "fair_prob": 0.04
+        },
+        "correct_score_1_3_val": {
+          "raw": 76.8,
+          "fair_prob": 0.013
+        },
+        "correct_score_1_4_val": {
+          "raw": 312.0,
+          "fair_prob": 0.0032
+        },
+        "correct_score_1_5_val": {
+          "raw": 1500.0,
+          "fair_prob": 0.0007
+        },
+        "correct_score_2_0_val": {
+          "raw": 7.9,
+          "fair_prob": 0.1266
+        },
+        "correct_score_2_1_val": {
+          "raw": 8.18,
+          "fair_prob": 0.1222
+        },
+        "correct_score_2_2_val": {
+          "raw": 16.2,
+          "fair_prob": 0.0617
+        },
+        "correct_score_2_3_val": {
+          "raw": 71.0,
+          "fair_prob": 0.0141
+        },
+        "correct_score_2_4_val": {
+          "raw": 290.0,
+          "fair_prob": 0.0034
+        },
+        "correct_score_3_0_val": {
+          "raw": 10.8,
+          "fair_prob": 0.0926
+        },
+        "correct_score_3_1_val": {
+          "raw": 11.2,
+          "fair_prob": 0.0893
+        },
+        "correct_score_3_2_val": {
+          "raw": 23.3,
+          "fair_prob": 0.0429
+        },
+        "correct_score_3_3_val": {
+          "raw": 67.0,
+          "fair_prob": 0.0149
+        },
+        "correct_score_4_0_val": {
+          "raw": 19.6,
+          "fair_prob": 0.051
+        },
+        "correct_score_4_1_val": {
+          "raw": 20.4,
+          "fair_prob": 0.049
+        },
+        "correct_score_4_2_val": {
+          "raw": 42.5,
+          "fair_prob": 0.0235
+        },
+        "correct_score_5_0_val": {
+          "raw": 44.6,
+          "fair_prob": 0.0224
+        },
+        "correct_score_5_1_val": {
+          "raw": 46.6,
+          "fair_prob": 0.0215
+        },
+        "correct_score_6_0_val": {
+          "raw": 119.0,
+          "fair_prob": 0.0084
+        }
+      },
+      "Correct Score (HT)": {
+        "ht_correct_score_0_0_val": {
+          "raw": 5.13,
+          "fair_prob": 0.1949
+        },
+        "ht_correct_score_0_1_val": {
+          "raw": 16.9,
+          "fair_prob": 0.0592
+        },
+        "ht_correct_score_0_2_val": {
+          "raw": 79.1,
+          "fair_prob": 0.0126
+        },
+        "ht_correct_score_0_3_val": {
+          "raw": 687.0,
+          "fair_prob": 0.0015
+        },
+        "ht_correct_score_1_0_val": {
+          "raw": 3.78,
+          "fair_prob": 0.2646
+        },
+        "ht_correct_score_1_1_val": {
+          "raw": 7.25,
+          "fair_prob": 0.1379
+        },
+        "ht_correct_score_1_2_val": {
+          "raw": 47.6,
+          "fair_prob": 0.021
+        },
+        "ht_correct_score_2_0_val": {
+          "raw": 4.94,
+          "fair_prob": 0.2024
+        },
+        "ht_correct_score_2_1_val": {
+          "raw": 9.13,
+          "fair_prob": 0.1095
+        },
+        "ht_correct_score_3_0_val": {
+          "raw": 10.2,
+          "fair_prob": 0.098
+        }
+      },
+      "1X2 (HT)": {
+        "ht_1x2_1_val": {
+          "raw": 1.54,
+          "fair_prob": 0.6494
+        },
+        "ht_1x2_x_val": {
+          "raw": 3.14,
+          "fair_prob": 0.3185
+        },
+        "ht_1x2_2_val": {
+          "raw": 11.0,
+          "fair_prob": 0.0909
+        }
+      },
+      "HT/FT": {
+        "ht_ft_1_1_val": {
+          "raw": 1.8,
+          "fair_prob": 0.5556
+        },
+        "ht_ft_1_x_val": {
+          "raw": 12.7,
+          "fair_prob": 0.0787
+        },
+        "ht_ft_1_2_val": {
+          "raw": 42.9,
+          "fair_prob": 0.0233
+        },
+        "ht_ft_x_1_val": {
+          "raw": 7.37,
+          "fair_prob": 0.1357
+        },
+        "ht_ft_x_x_val": {
+          "raw": 7.53,
+          "fair_prob": 0.1328
+        },
+        "ht_ft_x_2_val": {
+          "raw": 17.7,
+          "fair_prob": 0.0565
+        },
+        "ht_ft_2_1_val": {
+          "raw": 49.7,
+          "fair_prob": 0.0201
+        },
+        "ht_ft_2_x_val": {
+          "raw": 44.7,
+          "fair_prob": 0.0224
+        },
+        "ht_ft_2_2_val": {
+          "raw": 20.3,
+          "fair_prob": 0.0493
+        }
+      },
+      "1X2 + BTTS Combo": {
+        "1x2_gg_1_gg_val": {
+          "raw": 3.14,
+          "fair_prob": 0.3185
+        },
+        "1x2_gg_1_ng_val": {
+          "raw": 2.62,
+          "fair_prob": 0.3817
+        },
+        "1x2_gg_x_gg_val": {
+          "raw": 5.81,
+          "fair_prob": 0.1721
+        },
+        "1x2_gg_x_ng_val": {
+          "raw": 17.4,
+          "fair_prob": 0.0575
+        },
+        "1x2_gg_2_gg_val": {
+          "raw": 14.7,
+          "fair_prob": 0.068
+        },
+        "1x2_gg_2_ng_val": {
+          "raw": 17.1,
+          "fair_prob": 0.0585
+        }
+      },
+      "1X2 + O/U 1.5 Combo": {
+        "1x2_o_u_1_5_1_ov_val": {
+          "raw": 1.61,
+          "fair_prob": 0.6211
+        },
+        "1x2_o_u_1_5_1_un_val": {
+          "raw": 9.04,
+          "fair_prob": 0.1106
+        },
+        "1x2_o_u_1_5_x_ov_val": {
+          "raw": 5.57,
+          "fair_prob": 0.1795
+        },
+        "1x2_o_u_1_5_x_un_val": {
+          "raw": 16.7,
+          "fair_prob": 0.0599
+        },
+        "1x2_o_u_1_5_2_ov_val": {
+          "raw": 10.4,
+          "fair_prob": 0.0962
+        },
+        "1x2_o_u_1_5_2_un_val": {
+          "raw": 27.8,
+          "fair_prob": 0.036
+        }
+      },
+      "1X2 + O/U 2.5 Combo": {
+        "1x2_o_u_2_5_1_ov_val": {
+          "raw": 2.0,
+          "fair_prob": 0.5
+        },
+        "1x2_o_u_2_5_1_un_val": {
+          "raw": 4.32,
+          "fair_prob": 0.2315
+        },
+        "1x2_o_u_2_5_x_ov_val": {
+          "raw": 13.7,
+          "fair_prob": 0.073
+        },
+        "1x2_o_u_2_5_x_un_val": {
+          "raw": 6.01,
+          "fair_prob": 0.1664
+        },
+        "1x2_o_u_2_5_2_ov_val": {
+          "raw": 12.7,
+          "fair_prob": 0.0787
+        },
+        "1x2_o_u_2_5_2_un_val": {
+          "raw": 18.7,
+          "fair_prob": 0.0535
+        }
+      },
+      "Total Goals (Exact)": {
+        "total_goals_0_val": {
+          "raw": 17.6,
+          "fair_prob": 0.0568
+        },
+        "total_goals_1_val": {
+          "raw": 6.82,
+          "fair_prob": 0.1466
+        },
+        "total_goals_2_val": {
+          "raw": 4.08,
+          "fair_prob": 0.2451
+        },
+        "total_goals_3_val": {
+          "raw": 4.02,
+          "fair_prob": 0.2488
+        },
+        "total_goals_4_val": {
+          "raw": 4.85,
+          "fair_prob": 0.2062
+        },
+        "total_goals_5_val": {
+          "raw": 7.95,
+          "fair_prob": 0.1258
+        },
+        "total_goals_6_val": {
+          "raw": 14.4,
+          "fair_prob": 0.0694
+        }
+      }
+    }
+  }
+}

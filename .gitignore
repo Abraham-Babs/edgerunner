@@ -30,4 +30,7 @@ analysis/screenshots/
 analysis/
 bet_log.csv
 lookup/
+# Large raw datasets & live logs
+h2h_odds.json
+h2h_updates.log
 browser_data/

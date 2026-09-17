@@ -5,63 +5,49 @@ Deterministic mapping from exchange virtual market IDs and selectionTypeIds
 to canonical outcome keys.
 """
 
+import os
+import json
 from typing import Dict, Tuple, Optional
 
+_SCHEMA_FILE = os.path.join(os.path.dirname(__file__), "market_schema.json")
+
 # (market_id, selection_type_id) -> canonical outcome_key
-MARKET_SELECTION_TO_OUTCOME: Dict[Tuple[str, str], str] = {
-    # 1X2 (Market 3)
-    ("3", "39"): "1x2_1_val",
-    ("3", "40"): "1x2_x_val",
-    ("3", "41"): "1x2_2_val",
-
-    # Double Chance (Market 5)
-    ("5", "52"): "double_chance_1x_val",
-    ("5", "53"): "double_chance_12_val",
-    ("5", "54"): "double_chance_x2_val",
-
-    # Over / Under 1.5 (Market 6)
-    ("6", "55"): "o_u_1_5_ov_val",
-    ("6", "56"): "o_u_1_5_un_val",
-
-    # Over / Under 2.5 (Market 7)
-    ("7", "57"): "o_u_2_5_ov_val",
-    ("7", "58"): "o_u_2_5_un_val",
-
-    # Over / Under 3.5 (Market 8)
-    ("8", "59"): "o_u_3_5_ov_val",
-    ("8", "60"): "o_u_3_5_un_val",
-
-    # Over / Under 4.5 (Market 35)
-    ("35", "159"): "o_u_4_5_ov_val",
-    ("35", "160"): "o_u_4_5_un_val",
-
-    # Both Teams To Score / GG-NG (Market 13)
-    ("13", "83"): "gg_ng_gg_val",
-    ("13", "84"): "gg_ng_ng_val",
-}
+MARKET_SELECTION_TO_OUTCOME: Dict[Tuple[str, str], str] = {}
 
 # Reverse lookup: outcome_key -> (market_id, selection_type_id, area_id)
-OUTCOME_TO_MARKET_SELECTION: Dict[str, Tuple[str, str, str]] = {
-    # Popular tab (Area 1)
-    "1x2_1_val": ("3", "39", "1"),
-    "1x2_x_val": ("3", "40", "1"),
-    "1x2_2_val": ("3", "41", "1"),
-    "double_chance_1x_val": ("5", "52", "1"),
-    "double_chance_12_val": ("5", "53", "1"),
-    "double_chance_x2_val": ("5", "54", "1"),
-    "o_u_2_5_ov_val": ("7", "57", "1"),
-    "o_u_2_5_un_val": ("7", "58", "1"),
-    "gg_ng_gg_val": ("13", "83", "1"),
-    "gg_ng_ng_val": ("13", "84", "1"),
+OUTCOME_TO_MARKET_SELECTION: Dict[str, Tuple[str, str, str]] = {}
 
-    # Over / Under tab (Area 2)
-    "o_u_1_5_ov_val": ("6", "55", "2"),
-    "o_u_1_5_un_val": ("6", "56", "2"),
-    "o_u_3_5_ov_val": ("8", "59", "2"),
-    "o_u_3_5_un_val": ("8", "60", "2"),
-    "o_u_4_5_ov_val": ("35", "159", "2"),
-    "o_u_4_5_un_val": ("35", "160", "2"),
-}
+def _init_market_mappings():
+    if os.path.exists(_SCHEMA_FILE):
+        try:
+            with open(_SCHEMA_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                for item in data.get("mappings", []):
+                    m_id = str(item["market_id"])
+                    s_id = str(item["selection_type_id"])
+                    a_id = str(item.get("area_id", "1"))
+                    out = str(item["outcome"])
+                    MARKET_SELECTION_TO_OUTCOME[(m_id, s_id)] = out
+                    OUTCOME_TO_MARKET_SELECTION[out] = (m_id, s_id, a_id)
+                return
+        except Exception:
+            pass
+
+    # Standard fallback definitions if external schema file is not present
+    fallbacks = [
+        ("3", "39", "1", "1x2_1_val"), ("3", "40", "1", "1x2_x_val"), ("3", "41", "1", "1x2_2_val"),
+        ("5", "52", "1", "double_chance_1x_val"), ("5", "53", "1", "double_chance_12_val"), ("5", "54", "1", "double_chance_x2_val"),
+        ("6", "55", "2", "o_u_1_5_ov_val"), ("6", "56", "2", "o_u_1_5_un_val"),
+        ("7", "57", "1", "o_u_2_5_ov_val"), ("7", "58", "1", "o_u_2_5_un_val"),
+        ("8", "59", "2", "o_u_3_5_ov_val"), ("8", "60", "2", "o_u_3_5_un_val"),
+        ("35", "159", "2", "o_u_4_5_ov_val"), ("35", "160", "2", "o_u_4_5_un_val"),
+        ("13", "83", "1", "gg_ng_gg_val"), ("13", "84", "1", "gg_ng_ng_val"),
+    ]
+    for m, s, a, out in fallbacks:
+        MARKET_SELECTION_TO_OUTCOME[(m, s)] = out
+        OUTCOME_TO_MARKET_SELECTION[out] = (m, s, a)
+
+_init_market_mappings()
 
 # Mapping of outcome_key to UI Tab and Category for execution fallback
 OUTCOME_TO_UI_METADATA: Dict[str, Dict[str, str]] = {
