@@ -34,3 +34,4 @@ lookup/
 h2h_odds.json
 h2h_updates.log
 browser_data/
+.git_backup/
