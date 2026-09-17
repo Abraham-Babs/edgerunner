@@ -1,134 +1,110 @@
-# PROJECT CONTEXT & HANDOVER: QUANTITATIVE SPORTS TRADING ENGINE
+# Project Context & Engineering Notes
 
-> **⚠️ ALL COLLABORATORS & AGENTS:**
-> 1. ALWAYS use `git` before and after modifying files. Review diffs with `git diff`.
-> 2. Read the actual source code — do NOT make assumptions or rely on stale mental models.
-> 3. Verify changes with `--dry-run` before attempting real money betting.
-> 4. Keep code minimal and clean. No artificial sleeps or Gambler's Fallacy bloat.
+This document captures the architectural decisions, math model, execution pipeline, and production gotchas learned while building and running this trading engine.
 
 ---
 
 ## 1. Platform & Leagues
-* **Platform**: Virtual Sports Execution Exchange (`EXCHANGE_BASE_URL`).
-* **Leagues (4 Active)**:
-  * **Virtual Premier League (England - `league_en`)**: 20 teams, 10 matches/round, 180s cycle.
-  * **Virtual Primera Liga (Spain - `league_es`)**: 20 teams, 10 matches/round, 180s cycle.
-  * **Virtual Serie League (Italy - `league_it`)**: 20 teams, 10 matches/round, 180s cycle.
-  * **Virtual Bundes League (Germany - `league_de`)**: 18 teams, 9 matches/round, 90s cycle.
-* **Default Active Profile**: `ultra_conservative`.
+
+The engine targets high-frequency virtual sports leagues running on fixed round intervals:
+
+* **Virtual Premier League (England - `league_en`)**: 20 teams, 10 matches per round, 180-second cycle.
+* **Virtual Primera Liga (Spain - `league_es`)**: 20 teams, 10 matches per round, 180-second cycle.
+* **Virtual Serie League (Italy - `league_it`)**: 20 teams, 10 matches per round, 180-second cycle.
+* **Virtual Bundes League (Germany - `league_de`)**: 18 teams, 9 matches per round, 90-second cycle.
+
+Default operating profile: `ultra_conservative`.
 
 ---
 
-## 2. Architecture: Decoupled Discovery + Two-Layer Session Execution
+## 2. Architecture: Discovery + Two-Layer Execution
 
-The engine operates on a clean two-tier architecture:
+The engine uses a two-tier architecture separating market monitoring from order execution:
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│ 1. HIGH-SPEED HTTP/2 DISCOVERY (engine/discovery/client.py) │
-│    - Scans all 4 leagues concurrently in ~1.5s via HTTP/2   │
-│    - Syncs server clock skew via HTTP Date header           │
-│    - Matches odds against Poisson bivariate lambda models   │
-│    - Caches qualified +EV edges in MasterBoard memory pool  │
-└──────────────────────────────┬──────────────────────────────┘
-                               │ (Only if qualified tickets exist)
-┌──────────────────────────────▼──────────────────────────────┐
-│ 2. TWO-LAYER PLAYWRIGHT EXECUTION (engine/bettor.py)        │
-│    - Layer 1 (Camouflage): Sends authentic human UI         │
-│      telemetry ahead of dispatch (<4.0s emergency bypass)   │
-│    - Layer 2 (Dispatch): In-session authenticated API POST  │
-│      to dispatch endpoint (sub-second)                      │
-│    - Post-Dispatch: Programmatic localStorage & drawer wipe │
-│    - Settlement: In-session API queries to settled orders   │
-│      reconciles WON/LOST and payout directly into log.csv   │
-└─────────────────────────────────────────────────────────────┘
-```
+1. **High-Speed HTTP/2 Discovery (`engine/discovery/client.py`)**:
+   * Scans all 4 leagues concurrently in ~1.5 seconds.
+   * Calibrates local clock skew against the exchange server using HTTP Date headers.
+   * Matches live odds against bivariate Poisson lambda models.
+   * Stores qualifying positive expected-value (+EV) bets in a shared MasterBoard cache.
+
+2. **Two-Layer Execution (`engine/bettor.py`)**:
+   * **Telemetry Layer**: Dispatches natural touch and scroll events ahead of order submission to satisfy bot-detection checks.
+   * **Direct Session Dispatch**: Sends the authenticated betting payload directly through the active browser session for sub-second execution.
+   * **State Cleanup**: Automatically purges DOM betslip elements and storage state between orders.
+   * **Settlement Reconciliation**: Polls settled bet endpoints in the background and writes outcomes (WON/LOST) and returns directly to `bet_log.csv`.
 
 ---
 
-## 3. Statistical Edge Pipeline & Math Model
+## 3. Statistical Model & Edge Gate
 
-### Edge Computation & Poisson Validation
-- Live odds across 1X2, Double Chance, and Over/Under are cross-checked against bivariate Poisson models (`matchup_lambdas_league_*.parquet`).
-- Expected Value: $\text{EV} = (\text{Model Probability} \times \text{Live Odds}) - 1$.
-- `ultra_conservative` requires $\text{EV} \ge +5\%$ statistical advantage.
+### Edge Computation & Validation
+* Live odds across 1X2, Double Chance, and Over/Under markets are compared against pre-computed bivariate Poisson models (`lookup/matchup_lambdas_league_*.parquet`).
+* Expected Value formula: `EV = (Model Probability * Live Odds) - 1.0`.
+* The `ultra_conservative` profile requires at least a 5% positive edge (`EV >= 0.05`).
 
-### Per-League Calibrated Odds Bands (`engine/config.py`)
-Odds outside these boundaries are rejected to avoid low-liquidity or heavily raked market traps:
-- `league_en` (England): `2.00 – 3.20`
-- `league_de` (Germany): `1.50 – 5.00`
-- `league_es` (Spain): `1.45 – 3.50`
-- `league_it` (Italy): `1.45 – 3.50`
+### Calibrated Odds Bands
+Odds outside these boundaries are discarded to avoid high-vig traps or erratic longshots:
+* England (`league_en`): 2.00 to 3.20
+* Germany (`league_de`): 1.50 to 5.00
+* Spain (`league_es`): 1.45 to 3.50
+* Italy (`league_it`): 1.45 to 3.50
 
 ---
 
-## 4. Conviction Tiers & Stake Sizing
+## 4. Conviction Tiers & Staking
 
 ### Tier Classification (`engine/ticket_builder.py`)
-- **Tier 1 (Anchor)**: $\text{EV} \ge 6\%$, Odds $\le 2.40$ → Base stake 4.0% of bankroll.
-- **Tier 2 (Value)**: $\text{EV} \ge 5\%$, Odds $\le 3.20$ → Base stake 2.5%–3.5% of bankroll.
-- **Tier 3 (Speculative)**: Any confirmed edge → 2.0% flat.
-- **Smart Doubles**: Combined odds $\le 2.80$–$3.00$ → 2.5%–3.5% stake.
-- **Human Increments**: Stakes snap cleanly to steps: `10, 15, 20, 25 ... 500`.
+* **Tier 1 (Anchor)**: EV >= 6% and odds <= 2.40. Base stake is 4.0% of bankroll.
+* **Tier 2 (Value)**: EV >= 5% and odds <= 3.20. Base stake is 2.5% to 3.5% of bankroll.
+* **Tier 3 (Speculative)**: Any remaining qualifying edge. Staked at 2.0% flat.
+* **Smart Doubles**: Combined odds capped at 2.80 to 3.00.
+* **Human Step Quantization**: All stakes round to natural human numbers (e.g., 10, 15, 20, 25 ... 500).
 
 ---
 
-## 5. Risk Management (`engine/runner.py → RiskManager`)
+## 5. Bankroll Risk Management (`RiskManager`)
 
-Virtual sports is an independent, memoryless RNG process (i.i.d.).
-**Gambler's Fallacy heuristics (streak cool-offs, artificial loss pauses, profit breathers) have been permanently purged.**
+Virtual sports rounds are memoryless, independent random number generator (RNG) events. The engine avoids gambler's fallacy logic (like streak cool-downs or Martingale doubling) and relies entirely on strict bankroll rules:
 
-The system relies strictly on quantitative capital controls:
-
-| Equity (`Live Cash + In-Play`) | Mode | Max Tickets/Cycle | Max In-Play Exposure |
-|---|---|---|---|
-| `< 1,200 units` | **BEDROCK_SHIELD** | 2 | Max 4 active tickets (~14% total bankroll) |
-| `1,200 – 5,999 units` | **CORE_GROWTH** | 2 | Max 4 active tickets |
-| `≥ 6,000 units` | **EXPANSION_RATCHET**| 3 | Max 10 active tickets (satellites enabled) |
-
-### Non-Negotiable Capital Shields:
-1. **~85% Bankroll Cash Shield**: Per-bet staking (3%–4%) combined with the 4-ticket cap guarantees ~85% of capital remains liquid and protected from simultaneous loss.
-2. **Hard Stop-Loss Floor**: If True Equity breaches `< 100 units` or drops `50%` below starting capital, the engine triggers a hard emergency termination.
-3. **Consecutive Failure Alert**: If 3 bet submission attempts fail consecutively, self-healing triggers; if 6 fail, the engine aborts to protect against interface redesigns.
+* **Cash Shield**: With fractional 3% to 4% stakes and a 4-ticket cap, roughly 85% of total bankroll remains liquid and protected against simultaneous drawdowns.
+* **Hard Stop-Loss Floor**: If account equity drops below 50% of starting capital or under the critical floor, the engine aborts immediately.
+* **Failure Circuit Breaker**: If 3 order submissions fail consecutively, recovery self-healing runs. If 6 fail in a row, the engine shuts down to avoid runaway errors if the UI changes.
 
 ---
 
-## 6. Critical Engineering Gotchas & Invariants (DO NOT REVERT)
+## 6. Key Production Lessons & Gotchas
 
-1. **Native Mobile Touch Dispatch (`element.tap()`):**
-   Mobile web apps operate with `has_touch=True`. Standard desktop `page.mouse.click()` or `click(force=True)` **will NOT trigger odds selections**. Always use `element.tap()` (with fallback to `click(force=True)`).
-2. **Preloader Overlay (`z-[99999999]`):**
-   Platforms frequently inject preloader overlays covering the screen. `parser.clean_page(page)` removes this overlay. Always run `clean_page()` before UI interactions.
-3. **Analytics & Ad Tracker Route Aborting:**
-   External ad tracking pixels cause navigation timeouts on slower networks. [runner.py](file:///engine/runner.py) aborts `google-analytics`, `doubleclick`, `facebook`, `bing`, and related tracking requests.
-4. **Phone Login Format:**
-   `.env` `EXCHANGE_USERNAME` formatted for target mask. If provided with a leading `0`, [bettor.py](file:///engine/bettor.py) strips the leading zero automatically.
-5. **Betslip Drawer Scoping:**
-   Do not query generic `div[class*="drawer"]`—scope to `[data-testid="betslip-header"]` and its parent tree.
-6. **Unified `--dry-run` and `dry_fire` Flag:**
-   `bettor.execute_ticket()` checks `if dry_fire or dry_run:` to ensure that `--dry-run` halts before the final "PLACE BET" tap, saves screenshot proof, and clears the slip without deducting money.
-7. **In-Session Settled Bets API Reconciliation:**
-   Settled bets are queried via the in-session authenticated route (`EXCHANGE_SETTLED_URL`).
-   The engine updates `outcome` (`WON`/`LOST`), `settled_at`, and `returned_amount` in `analysis/results/bet_log.csv` without page navigation or board disturbance.
-8. **Virtual Odds Do NOT Drift / Shift Dynamically:**
-   Virtual sports odds are static algorithmic constants determined by the RNG model per matchup—they do not float or drift like real sports markets.
-9. **Earliest Deadline First (EDF) Equal-Slack Adaptive Scheduler:**
-   Tickets are sorted by kickoff urgency ($D_1 \le D_2 \dots$). Adaptive pacing dynamically distributes slack (10s–25s target) with occasional fast-follow bursts (5.0s–7.5s). Surplus tickets are retained on the MasterBoard across cycles rather than dropped.
-10. **Zero-Locking Submissions:**
-    Exchanges accept tickets down to the millisecond before event kickoff. Any HTTP 400 with `EVENT_EXPIRED` indicates submission occurred after kickoff epoch. Payload submission is deterministic and instant via direct session fetch.
+1. **Native Mobile Touch Events**:
+   Because mobile viewports are simulated with touch enabled, standard desktop mouse clicks often fail to trigger odds buttons. The code uses `element.tap()` with a force-click fallback.
+
+2. **Preloader Overlays**:
+   Platforms often inject high z-index loading screens that intercept pointer events. `parser.clean_page(page)` removes these elements before interacting with odds buttons.
+
+3. **Ad Tracker Route Blocking**:
+   Third-party ad pixels and trackers often cause navigation timeouts on slow connections. Network routing explicitly blocks known tracking domains to maintain low latency.
+
+4. **Static Virtual Odds**:
+   Unlike live human sports where odds float constantly, virtual sports odds are fixed once generated for that round. Once parsed, they do not drift prior to kickoff.
+
+5. **Earliest Deadline First (EDF) Pacing**:
+   Tickets are sorted by kickoff time so urgent matches are placed first. Spacing is dynamically paced (typically 10 to 25 seconds between orders) to mimic human behavior.
+
+6. **Dry-Run Mode**:
+   Running with `--dry-run` performs all odds parsing, validation, ticket building, and betslip population, but halts before final submission, captures a screenshot, and clears the slip.
 
 ---
 
-## 7. How to Run the Engine
+## 7. How to Run
 
-Always activate virtual environment first:
-```powershell
-# 1. Run live dry-fire test (0 real money, captures UI screenshot evidence)
-.venv\Scripts\python -u -m engine.runner --profile ultra_conservative --dry-run --max-rounds 1
+From the project root:
 
-# 2. Run continuous live autonomous execution
-.venv\Scripts\python -u -m engine.runner --profile ultra_conservative
+```bash
+# 1. Run offline paper-trading simulation (0 credentials or browser needed)
+python -m engine.runner --mock --max-rounds 2
 
-# 3. Fast unauthenticated HTTP discovery diagnostics
-.venv\Scripts\python scratch/test_discovery_client.py
+# 2. Run unit tests
+python -m engine.tests.test_tickets
+
+# 3. Run safe live dry-run (populates UI, saves screenshots, places 0 real bets)
+python -m engine.runner --profile ultra_conservative --dry-run --max-rounds 1
 ```
