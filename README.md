@@ -1,8 +1,8 @@
 # EdgeRunner
 
-A Python project for statistical edge detection and automated execution in time-sensitive simulated markets.
+EdgeRunner started as a side project to explore how decision-making, timing, and risk controls fit together in a time-sensitive market. The goal was to build a system that could discover candidate opportunities, filter out weak signals, and enforce discipline before any execution happened.
 
-EdgeRunner combines market discovery, historical edge matching, ticket construction, bankroll controls, and execution logic. The project is structured around a few core ideas: qualify candidate edges, reduce exposure to weak signals, schedule bets based on urgency, and validate execution before live use.
+The project combines market discovery, historical edge matching, ticket construction, bankroll controls, and execution logic. It also includes mock and dry-run modes so the decision pipeline can be tested without real exposure.
 
 The public version has been decoupled from the original live platform and uses generic configuration and offline fixtures for review and experimentation.
 
@@ -28,7 +28,7 @@ flowchart LR
     L --> B
 ```
 
-The flow is straightforward: discover candidate markets, compare them against historical edge data, build tickets only from qualified selections, apply existing risk constraints, and then validate or execute the result.
+The flow is straightforward: discover candidate markets, compare them against historical edge data, build tickets only from qualified selections, apply risk constraints, and then validate or execute the result.
 
 ## What the project does
 
@@ -99,13 +99,13 @@ README.md
 sample_odds.json
 ```
 
-## Important note on model validity
+## What I learned
 
-The original strategy eventually lost its edge. I initially suspected ordinary variance, but further inspection showed that the underlying data-generating process had changed and the historical assumptions no longer matched the live environment. The historical edge was not representative anymore.
+The original strategy eventually stopped working. I first suspected ordinary variance, but after reviewing the historical and live behavior, I found that the underlying data-generating process had changed. The historical edge was no longer representative of the current environment.
 
-That is an important lesson in this kind of system: a strong execution framework cannot compensate for a broken assumption in the data or model. It is better to stop a strategy than to keep adjusting around a premise that no longer holds.
+The main lesson was that good execution and risk controls cannot compensate for a model built on invalid assumptions. A system can be well engineered and still be wrong if the assumptions behind it are no longer valid.
 
-This repository is therefore kept as a sanitized engineering demonstration of the system design, the execution logic, and the model-risk lesson rather than as a claim that the original live strategy is still valid.
+I kept this repository as a sanitized engineering demo of the system design, the execution logic, and that lesson rather than as a claim that the original live strategy is still valid.
 
 ## Risk controls and validation
 
@@ -121,7 +121,7 @@ The engine includes a few practical safeguards:
 
 ## Scope and safety
 
-This public version is intended for review, offline experimentation, and technical discussion. Any live execution path requires explicit authorization, proper environment controls, and independent validation of the underlying assumptions.
+I kept this public version as a sanitized engineering demo rather than a live system. It is meant for review, offline experimentation, and technical discussion. Any real execution path requires explicit authorization, proper environment controls, and independent validation of the assumptions behind the model.
 
 ## License
 
