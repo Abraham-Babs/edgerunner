@@ -1,101 +1,128 @@
-# Automated Value Betting & Execution Engine
+# EdgeRunner
 
-An algorithmic sports trading system designed for automated market discovery, statistical edge detection, deadline-aware bet execution, and strict bankroll risk management.
+A Python project for statistical edge detection and automated execution in time-sensitive simulated markets.
 
----
+EdgeRunner combines market discovery, historical edge matching, ticket construction, bankroll controls, and execution logic. The project is structured around a few core ideas: qualify candidate edges, reduce exposure to weak signals, schedule bets based on urgency, and validate execution before live use.
 
-## Background & Project Context
+The public version has been decoupled from the original live platform and uses generic configuration and offline fixtures for review and experimentation.
 
-This project originally ran as a targeted, automated value-betting bot operating on a live virtual sports platform. Its primary job was to scan high-frequency simulated football leagues, spot mispriced bookmaker odds using historical statistical models, and place qualifying value bets before match countdowns expired.
+## Architecture
 
-To showcase this work publicly, I anonymized and decoupled the entire codebase:
-- All proprietary bookmaker domains, API endpoints, credentials, and internal category IDs were replaced with generic configuration variables.
-- The raw, multi-megabyte platform odds dumps were untracked and replaced with lightweight sample fixtures.
-- An offline mock mode was added so anyone can run and inspect the full pipeline without credentials, web browsers, or live network access.
+```mermaid
+flowchart LR
+    A[Market Discovery] --> B[Edge Matcher]
+    B --> C[Master Board]
+    C --> D[Ticket Builder]
+    D --> E[Risk Manager]
+    E --> F{Execution Mode}
 
-What remains is the real engineering challenge: low-latency data polling, synchronization against bookmaker server clocks, automated headless browser control with anti-bot handling, dynamic bet ticket assembly, and defensive bankroll management.
+    F -->|Mock| G[Paper Settlement]
+    F -->|Dry run| H[Execution Validation]
+    F -->|Live adapter| I[Execution Layer]
 
----
+    G --> J[Reconciliation]
+    H --> J
+    I --> J
 
-## How It Works
+    K[Historical Data] --> L[Edge Compiler]
+    L --> B
+```
 
-The system runs in two main stages:
+The flow is straightforward: discover candidate markets, compare them against historical edge data, build tickets only from qualified selections, apply existing risk constraints, and then validate or execute the result.
 
-### 1. Market Discovery & Edge Matching
-Virtual football rounds run on strict countdown clocks (usually 3 minutes per round across multiple leagues). The engine:
-- Polls the active round fixtures across all supported leagues.
-- Syncs its local clock with the bookmaker server's clock using HTTP response headers to calculate the exact remaining seconds before kickoff.
-- Evaluates live odds against pre-compiled Poisson and empirical win-probability tables (`confirmed_edges.csv`).
-- Caches any positive expected-value (+EV) bets into a shared in-memory master board.
+## What the project does
 
-### 2. Execution & Risk Management
-When qualifying edges are found:
-- **Ticket Building**: Selections are graded into tiers based on edge size and odds. The builder creates single bets or smart doubles while ensuring no match is double-counted.
-- **Dynamic Staking**: Stakes are sized proportional to the edge and the current account balance (typically 2% to 5%), snapped to clean betting increments.
-- **Deadline Pacing**: The runner sorts pending tickets by kickoff urgency (Earliest Deadline First) and paces clicks with natural timing jitter to avoid triggering anti-bot protections.
-- **Capital Shields**: If account equity falls below 50% of the starting balance or hits a critical floor, the system terminates immediately to protect capital.
-
----
-
-## Project Structure
-
-- `engine/`
-  - `runner.py`: Main execution orchestrator, event loop, and risk controls.
-  - `master_board.py`: Thread-safe rolling window cache for active rounds and candidate edges.
-  - `ticket_builder.py`: Builds single and multi-leg tickets with fractional bankroll sizing.
-  - `bettor.py`: Handles browser navigation, slip clearing, and session API requests.
-  - `parser.py`: Extracts odds from the page and clears popups or overlays.
-  - `edge_matcher.py`: Cross-references live odds against pre-computed edge tables.
-  - `human_interaction.py`: Generates human-like mouse paths and randomized delays.
-  - `discovery/client.py`: Fast polling client with clock skew calibration.
-  - `config.py`: Central settings for leagues, odds thresholds, and selectors.
-- `analysis/`
-  - `results/`: Historical edge data, out-of-sample test results, and logs.
-
----
+| Area | What it does |
+|---|---|
+| Discovery | Polls multiple leagues and synchronizes timing |
+| Edge matching | Compares current odds with historical edge tables |
+| Master board | Combines candidates from different leagues and rounds |
+| Ticket builder | Builds singles and multi-leg tickets |
+| Risk controls | Limits exposure and aborts under defined loss conditions |
+| Execution | Supports mock, dry-run, and browser-driven modes |
+| Reconciliation | Matches placed tickets with settlement results |
 
 ## Quickstart
 
-### 1. Installation
-Clone the repository and set up a Python 3.11+ environment:
+### Install dependencies
 
 ```bash
-git clone https://github.com/your-username/sports-trading-engine.git
-cd sports-trading-engine
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-pip install -r requirements.txt  # Or: uv sync
+git clone https://github.com/Abraham-Babs/edgerunner.git
+cd edgerunner
+uv sync
 ```
 
-### 2. Run the Offline Mock Engine (Recommended)
-You can test the entire mathematical pipeline, MasterBoard synchronization, ticket builder, and simulated PnL settlements offline without needing browser binaries or credentials:
+### Run the offline mock engine
 
 ```bash
 python -m engine.runner --mock --max-rounds 3
 ```
 
-### 3. Run Unit Tests
-Run the test suite to verify ticket construction, staking quantization, and collision guards:
+This exercises the mathematical pipeline, candidate selection, master-board building, and simulated settlement without requiring credentials or external connectivity.
+
+### Run the dry-fire validation suite
 
 ```bash
-python -m engine.tests.test_tickets
+python test_dry_fire_suite.py
 ```
 
-### 4. Configuration (Optional)
-If configuring against a custom platform or testing environment, copy the environment template:
+This validates the DOM flow, odds selection, betslip state handling, and execution logic without placing real bets.
 
-```bash
-cp .env.example .env
+## Project structure
+
+```text
+engine/
+├── runner.py                  # Orchestration and execution modes
+├── edge_matcher.py            # Qualifies candidate edges from historical tables
+├── ticket_builder.py          # Builds tickets and sizes stakes
+├── master_board.py            # Aggregates and prioritizes candidates
+├── bettor.py                  # Browser/API execution layer and reconciliation
+├── parser.py                  # DOM parsing and page sanitization
+├── human_interaction.py       # Human-like interaction timing and gestures
+├── discovery/
+│   └── client.py              # Market discovery and synchronization
+├── pipeline/
+│   └── edge_compiler.py       # Statistical compilation of confirmed edges
+├── tests/
+│   └── test_tickets.py        # Ticket-level verification and invariants
+├── config.py                  # Profiles, risk limits, and configuration
+└── ...
+
+analysis/
+├── results/
+│   ├── confirmed_edges.csv
+│   └── bet_log.csv
+└── ...
+
+LICENSE
+README.md
+sample_odds.json
 ```
 
-Set your credentials and platform URL in `.env`. You can test browser automation in safe mode without placing actual bets using:
+## Important note on model validity
 
-```bash
-python -m engine.runner --dry-run --max-rounds 1
-```
+The original strategy eventually lost its edge. I initially suspected ordinary variance, but further inspection showed that the underlying data-generating process had changed and the historical assumptions no longer matched the live environment. The historical edge was not representative anymore.
 
----
+That is an important lesson in this kind of system: a strong execution framework cannot compensate for a broken assumption in the data or model. It is better to stop a strategy than to keep adjusting around a premise that no longer holds.
+
+This repository is therefore kept as a sanitized engineering demonstration of the system design, the execution logic, and the model-risk lesson rather than as a claim that the original live strategy is still valid.
+
+## Risk controls and validation
+
+The engine includes a few practical safeguards:
+
+- profile-based thresholds for edge and odds bounds
+- duplicate-match prevention
+- active exposure limits
+- stop-loss protection based on bankroll and true equity
+- dry-run execution for UI validation without real risk
+- settlement reconciliation and bet logging
+- recovery after failed submissions or stale page state
+
+## Scope and safety
+
+This public version is intended for review, offline experimentation, and technical discussion. Any live execution path requires explicit authorization, proper environment controls, and independent validation of the underlying assumptions.
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the [MIT License](LICENSE).
